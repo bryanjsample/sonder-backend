@@ -6,7 +6,7 @@
 //
 
 import Fluent
-import struct Foundation.UUID
+import Foundation
 
 final class Post: Model, @unchecked Sendable {
     static let schema = "posts"
@@ -20,21 +20,28 @@ final class Post: Model, @unchecked Sendable {
     @Field(key: "content")
     var content: String
     
-//    @Field(key: "attachments")
+//    @Field(key: "attachments")         best way to store a number of attachments? mainly pictures
 //    var attachments: [Data]
-//
-//    @Field(key: "last_modified")
-//    var lastModified: Date
+    
+    @Timestamp(key: "created_at", on: .create)
+    var createdAt: Date?
+    
+    @Timestamp(key: "last_modified", on: .update)
+    var lastModified: Date?
     
     init() { }
     
     init(
         id: UUID? = nil,
         authorID: User.IDValue,
-        content: String
+        content: String,
+        createdAt: Date? = nil,
+        lastModified: Date? = nil,
     ) {
         self.id = id
         self.$author.id = authorID
         self.content = content
+        self.createdAt = createdAt
+        self.lastModified = lastModified
     }
 }

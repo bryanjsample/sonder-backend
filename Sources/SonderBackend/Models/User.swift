@@ -6,13 +6,16 @@
 //
 
 import Fluent
-import struct Foundation.UUID
+import Foundation
 
 final class User: Model, @unchecked Sendable {
     static let schema = "users"
     
     @ID(key: .id)
     var id: UUID?
+    
+    @Parent(key: "circleID")
+    var circle: Circle
     
     @Field(key: "first_name")
     var firstName: String
@@ -23,26 +26,34 @@ final class User: Model, @unchecked Sendable {
     @Field(key: "username")
     var username: String
     
-    @Parent(key: "circleID")
-    var circle: Circle
     
 //    @Field(key: "picture")
 //    var picture: Data
+    
+    @Timestamp(key: "created_at", on: .create)
+    var createdAt: Date?
+    
+    @Timestamp(key: "last_modified", on: .update)
+    var lastModified: Date?
     
     init() { }
     
     init(
         id: UUID? = nil,
+        circleID: Circle.IDValue,
         firstName: String,
         lastName: String,
         username: String,
-        circleID: Circle.IDValue
+        createdAt: Date? = nil,
+        lastModified: Date? = nil
     ) {
         self.id = id
+        self.$circle.id = circleID
         self.firstName = firstName
         self.lastName = lastName
         self.username = username
-        self.$circle.id = circleID
+        self.createdAt = createdAt
+        self.lastModified = lastModified
     }
     
 }

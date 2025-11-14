@@ -6,7 +6,7 @@
 //
 
 import Fluent
-import struct Foundation.UUID
+import Foundation
 
 final class Circle: Model, @unchecked Sendable {
     static let schema = "circles"
@@ -20,10 +20,13 @@ final class Circle: Model, @unchecked Sendable {
     @Field(key: "description")
     var description: String
     
-//    @Field(key: "date_created")
-//    var dateCreated: Date
+    @Timestamp(key: "created_at", on: .create)
+    var createdAt: Date?
     
-//    @Field(key: "picture")
+    @Timestamp(key: "last_modified", on: .update)
+    var lastModified: Date?
+    
+//    @Field(key: "picture")     how to store picture data
 //    var picture: Data
     
     init() { }
@@ -31,10 +34,14 @@ final class Circle: Model, @unchecked Sendable {
     init(
         id: UUID? = nil,
         name: String,
-        description: String
+        description: String,
+        createdAt: Date? = nil,
+        lastModified: Date? = nil,
     ) {
         self.id = id
         self.name = name
         self.description = description
+        self.createdAt = createdAt
+        self.lastModified = lastModified
     }
 }

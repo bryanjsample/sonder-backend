@@ -6,7 +6,7 @@
 //
 
 import Fluent
-import struct Foundation.UUID
+import Foundation
 
 final class Event: Model, @unchecked Sendable {
     static let schema = "events"
@@ -14,46 +14,57 @@ final class Event: Model, @unchecked Sendable {
     @ID(key: .id)
     var id: UUID?
     
-    @Field(key: "title")
-    var title: String
-    
-    @Field(key: "description")
-    var description: String
-    
-//    @Field(key: "start_time")
-//    var startTime: DateTime
-//    
-//    @Field(key: "end_time")
-//    var endTime: DateTime
-//    
-//    @Field(key: "location")
-//    var location: Location
-//    
-//    @Field(key: "last_modified")
-//    var lastModified: DateTime
-//
-//    @Children(key: "attendees")        this is a one->many relationship between event and an array of users
-//    var attendees: [User.IDValue]
-    
     @Parent(key: "hostID")
     var host: User
     
     @Parent(key: "circleID")
     var circle: Circle
     
+    @Field(key: "title")
+    var title: String
+    
+    @Field(key: "description")
+    var description: String
+    
+    @Field(key: "start_time")
+    var startTime: Date
+    
+    @Field(key: "end_time")
+    var endTime: Date
+    
+//    @Field(key: "location")            best way to store? coords probably
+//    var location: Location
+    
+//    @Children(key: "attendees")        this is a one->many relationship between event and an array of users
+//    var attendees: [User.IDValue]
+    
+    @Timestamp(key: "created_at", on: .create)
+    var createdAt: Date?
+    
+    @Timestamp(key: "last_modified", on: .update)
+    var lastModified: Date?
+    
     init() { }
     
     init(
         id: UUID? = nil,
+        hostID: User.IDValue,
+        circleID: Circle.IDValue,
         title: String,
         description: String,
-        hostID: User.IDValue,
-        circleID: Circle.IDValue
+        startTime: Date,
+        endTime: Date,
+        createdAt: Date? = nil,
+        lastModified: Date? = nil,
     ) {
         self.id = id
-        self.title = title
-        self.description = description
         self.$host.id = hostID
         self.$circle.id = circleID
+        self.title = title
+        self.description = description
+        self.startTime = startTime
+        self.endTime = endTime
+        self.createdAt = createdAt
+        self.lastModified = lastModified
     }
 }

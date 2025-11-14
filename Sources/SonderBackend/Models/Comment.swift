@@ -6,7 +6,7 @@
 //
 
 import Fluent
-import struct Foundation.UUID
+import Foundation
 
 final class Comment: Model, @unchecked Sendable {
     static let schema = "comments"
@@ -23,8 +23,11 @@ final class Comment: Model, @unchecked Sendable {
     @Field(key: "content")
     var content: String
     
-//    @Field(key: "last_modified")
-//    var lastModified: DateTime
+    @Timestamp(key: "created_at", on: .create)
+    var createdAt: Date?
+    
+    @Timestamp(key: "last_modified", on: .update)
+    var lastModified: Date?
     
     init() { }
     
@@ -32,11 +35,15 @@ final class Comment: Model, @unchecked Sendable {
         id: UUID? = nil,
         postID: Post.IDValue,
         authorID: User.IDValue,
-        content: String
+        content: String,
+        createdAt: Date? = nil,
+        lastModified: Date? = nil
     ) {
         self.id = id
         self.$post.id = postID
         self.$author.id = authorID
         self.content = content
+        self.createdAt = createdAt
+        self.lastModified = lastModified
     }
 }
