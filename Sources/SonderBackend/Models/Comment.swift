@@ -14,10 +14,10 @@ final class Comment: Model, @unchecked Sendable {
     @ID(key: .id)
     var id: UUID?
     
-    @Parent(key: "postID")
+    @Parent(key: "post_id")
     var post: Post
     
-    @Parent(key: "authorID")
+    @Parent(key: "author_id")
     var author: User
     
     @Field(key: "content")

@@ -14,8 +14,14 @@ final class Post: Model, @unchecked Sendable {
     @ID(key: .id)
     var id: UUID?
     
-    @Parent(key: "authorID")
+    @Parent(key: "circle_id")
+    var circle: Circle
+    
+    @Parent(key: "author_id")
     var author: User
+    
+    @Children(for: \.$post)
+    var comments: [Comment]
     
     @Field(key: "content")
     var content: String
@@ -33,12 +39,14 @@ final class Post: Model, @unchecked Sendable {
     
     init(
         id: UUID? = nil,
+        circleID: Circle.IDValue,
         authorID: User.IDValue,
         content: String,
         createdAt: Date? = nil,
         lastModified: Date? = nil,
     ) {
         self.id = id
+        self.$circle.id = circleID
         self.$author.id = authorID
         self.content = content
         self.createdAt = createdAt

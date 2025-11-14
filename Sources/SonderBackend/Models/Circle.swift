@@ -13,6 +13,15 @@ final class Circle: Model, @unchecked Sendable {
     
     @ID(key: .id)
     var id: UUID?
+    
+    @Children(for: \.$circle)
+    var users: [User]
+    
+    @Children(for: \.$circle)
+    var events: [CalendarEvent]
+    
+    @Children(for: \.$circle)
+    var posts: [Post]
 
     @Field(key: "name")
     var name: String

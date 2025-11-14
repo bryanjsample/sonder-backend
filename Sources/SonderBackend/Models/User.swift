@@ -14,8 +14,17 @@ final class User: Model, @unchecked Sendable {
     @ID(key: .id)
     var id: UUID?
     
-    @Parent(key: "circleID")
+    @Parent(key: "circle_id")
     var circle: Circle
+    
+    @Children(for: \.$author)
+    var posts: [Post]
+    
+    @Children(for: \.$author)
+    var comments: [Comment]
+    
+    @Children(for: \.$host)
+    var events: [CalendarEvent]
     
     @Field(key: "first_name")
     var firstName: String

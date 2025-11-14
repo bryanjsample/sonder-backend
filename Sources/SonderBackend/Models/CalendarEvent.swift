@@ -1,5 +1,5 @@
 //
-//  Event.swift
+//  CalendarEvent.swift
 //  SonderBackend
 //
 //  Created by Bryan Sample on 11/14/25.
@@ -8,16 +8,16 @@
 import Fluent
 import Foundation
 
-final class Event: Model, @unchecked Sendable {
+final class CalendarEvent: Model, @unchecked Sendable {
     static let schema = "events"
     
     @ID(key: .id)
     var id: UUID?
     
-    @Parent(key: "hostID")
+    @Parent(key: "host_id")
     var host: User
     
-    @Parent(key: "circleID")
+    @Parent(key: "circle_id")
     var circle: Circle
     
     @Field(key: "title")
