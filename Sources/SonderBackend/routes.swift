@@ -3,12 +3,19 @@ import Vapor
 
 func routes(_ app: Application) throws {
     app.get { req async in
-        "It works!"
+        "Sonder Homepage"
     }
-
-    app.get("hello") { req async -> String in
-        "Hello, world!"
-    }
-
-    try app.register(collection: TodoController())
+    
+    // establishes all endpoints to engage with a user
+    try app.register(collection: UsersController())
+    
+    // establish all endpoints to engage with a group
+    try app.register(collection: CirclesController())
+    
+    // establish all endpoints to engage with an event
+    try app.register(collection: EventsController())
+    
+    // establish all endpoints to engage with a post
+    try app.register(collection: PostsController())
+    
 }
