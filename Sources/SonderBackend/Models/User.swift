@@ -29,15 +29,17 @@ final class User: Model, @unchecked Sendable {
     @Field(key: "first_name")
     var firstName: String
     
+    @Field(key: "email")
+    var email: String
+    
     @Field(key: "last_name")
     var lastName: String
     
     @Field(key: "username")
-    var username: String
+    var username: String?
     
-    
-//    @Field(key: "picture")
-//    var picture: Data
+    @Field(key: "picture_url")
+    var pictureUrl: String?
     
     @Timestamp(key: "created_at", on: .create)
     var createdAt: Date?
@@ -49,20 +51,20 @@ final class User: Model, @unchecked Sendable {
     
     init(
         id: UUID? = nil,
-        circleID: Circle.IDValue,
+        circleID: Circle.IDValue = UUID() /*for testing onyl*/,
+        email: String,
         firstName: String,
         lastName: String,
-        username: String,
-        createdAt: Date? = nil,
-        lastModified: Date? = nil
+        username: String? = nil,
+        pictureUrl: String? = nil,
     ) {
         self.id = id
         self.$circle.id = circleID
+        self.email = email
         self.firstName = firstName
         self.lastName = lastName
         self.username = username
-        self.createdAt = createdAt
-        self.lastModified = lastModified
+        self.pictureUrl = pictureUrl
     }
     
 }

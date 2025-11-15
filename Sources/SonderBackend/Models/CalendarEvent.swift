@@ -53,9 +53,7 @@ final class CalendarEvent: Model, @unchecked Sendable {
         title: String,
         description: String,
         startTime: Date,
-        endTime: Date,
-        createdAt: Date? = nil,
-        lastModified: Date? = nil,
+        endTime: Date
     ) {
         self.id = id
         self.$host.id = hostID
@@ -64,7 +62,5 @@ final class CalendarEvent: Model, @unchecked Sendable {
         self.description = description
         self.startTime = startTime
         self.endTime = endTime
-        self.createdAt = createdAt
-        self.lastModified = lastModified
     }
 }

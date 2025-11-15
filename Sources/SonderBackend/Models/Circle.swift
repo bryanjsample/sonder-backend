@@ -29,14 +29,14 @@ final class Circle: Model, @unchecked Sendable {
     @Field(key: "description")
     var description: String
     
+    @Field(key: "picture_url")
+    var pictureUrl: String?
+    
     @Timestamp(key: "created_at", on: .create)
     var createdAt: Date?
     
     @Timestamp(key: "last_modified", on: .update)
     var lastModified: Date?
-    
-//    @Field(key: "picture")     how to store picture data
-//    var picture: Data
     
     init() { }
     
@@ -44,13 +44,11 @@ final class Circle: Model, @unchecked Sendable {
         id: UUID? = nil,
         name: String,
         description: String,
-        createdAt: Date? = nil,
-        lastModified: Date? = nil,
+        pictureUrl: String? = nil,
     ) {
         self.id = id
         self.name = name
         self.description = description
-        self.createdAt = createdAt
-        self.lastModified = lastModified
+        self.pictureUrl = pictureUrl
     }
 }

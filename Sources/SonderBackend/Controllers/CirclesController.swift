@@ -27,6 +27,7 @@ struct CirclesController: RouteCollection {
     
     func createCircle(req: Request) async throws -> String {
         "Create a new circle"
+        
     }
     
     func retrieve(req: Request) async throws -> String {

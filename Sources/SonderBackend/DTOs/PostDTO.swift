@@ -14,8 +14,6 @@ struct PostDTO: Content {
     var circle: Circle
     var author: User
     var content: String
-    var createdAt: Date?
-    var lastModified: Date?
     
     func toModel() -> Post {
         let model = Post()
@@ -23,12 +21,6 @@ struct PostDTO: Content {
         model.circle = self.circle
         model.author = self.author
         model.content = self.content
-        if let createdAt = self.createdAt {
-            model.createdAt = createdAt
-        }
-        if let lastModified = self.lastModified {
-            model.lastModified = lastModified
-        }
         return model
     }
 }

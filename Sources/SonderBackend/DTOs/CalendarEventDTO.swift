@@ -16,8 +16,6 @@ struct CalendarEventDTO: Content {
     var description: String
     var startTime: Date
     var endTime: Date
-    var createdAt: Date?
-    var lastModified: Date?
     
     func toModel() -> CalendarEvent {
         let model = CalendarEvent()
@@ -27,12 +25,6 @@ struct CalendarEventDTO: Content {
         model.description = self.description
         model.startTime = self.startTime
         model.endTime = self.endTime
-        if let createdAt = self.createdAt {
-            model.createdAt = createdAt
-        }
-        if let lastModified = self.lastModified {
-            model.lastModified = lastModified
-        }
         return model
     }
 }

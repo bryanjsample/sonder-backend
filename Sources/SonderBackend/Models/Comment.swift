@@ -36,14 +36,10 @@ final class Comment: Model, @unchecked Sendable {
         postID: Post.IDValue,
         authorID: User.IDValue,
         content: String,
-        createdAt: Date? = nil,
-        lastModified: Date? = nil
     ) {
         self.id = id
         self.$post.id = postID
         self.$author.id = authorID
         self.content = content
-        self.createdAt = createdAt
-        self.lastModified = lastModified
     }
 }
