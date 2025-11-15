@@ -14,7 +14,7 @@ struct CreateComment: AsyncMigration {
             .field("post_id", .uuid, .required, .references("posts", "id"))
             .field("author_id", .uuid, .required, .references("users", "id"))
             .field("content", .string, .required)
-            .field("created_at", .datetime, .required)
+            .field("created_at", .datetime)
             .field("last_modified", .datetime)
             .create()
     }

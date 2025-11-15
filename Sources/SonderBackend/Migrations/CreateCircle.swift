@@ -11,8 +11,8 @@ struct CreateCircle: AsyncMigration {
     func prepare(on database: any Database) async throws {
         try await database.schema("circles")
             .id()
-            .field("name", .string)
-            .field("description", .string)
+            .field("name", .string, .required)
+            .field("description", .string, .required)
             .field("created_at", .datetime)
             .field("last_modified", .datetime)
             .create()

@@ -9,25 +9,40 @@ import Vapor
 
 struct EventsController: RouteCollection {
     func boot(routes: any RoutesBuilder) throws {
-        let events = routes.grouped("circles", ":circleId", "events")
+        let events = routes.grouped("circles", ":circleID", "events")
         
         events.get(use: retrieveAll)
+        events.post(use: createEvent)
         
-        events.group(":eventId") { event in
+        events.group(":eventID") { event in
             event.get(use: retrieve)
+//            event.patch(use: edit)
+//            event.delete(use: remove)
         }
         
     }
     
     func retrieveAll(req: Request) async throws -> String {
-        let circleId = req.parameters.get("circleId")!
-        return "These are Circle \(circleId)'s events"
+        let circleID = req.parameters.get("circleID")!
+        return "These are Circle \(circleID)'s events"
     }
     
     func retrieve(req: Request) async throws -> String {
-        let circleId = req.parameters.get("circleId")!
-        let eventId = req.parameters.get("eventId")!
-        return "Circle \(circleId)'s event id = \(eventId)"
+        let circleID = req.parameters.get("circleID")!
+        let eventID = req.parameters.get("eventID")!
+        return "Circle \(circleID)'s event ID = \(eventID)"
     }
+    
+    func createEvent(req: Request) async throws -> String {
+        "Create new event"
+    }
+    
+//    func edit(req: Request) async throws -> String {
+//
+//    }
+    
+//    func remove(req: Request) async throws -> {
+//
+//    }
     
 }

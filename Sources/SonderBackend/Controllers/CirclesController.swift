@@ -14,8 +14,10 @@ struct CirclesController: RouteCollection {
         circles.get(use: retrieveAll)
         circles.post(use: createCircle)
         
-        circles.group(":circleId") { circle in
+        circles.group(":circleID") { circle in
             circle.get(use: retrieve)
+//            circle.patch(use: edit)
+//            circle.delete(use: remove)
         }
     }
     
@@ -28,7 +30,15 @@ struct CirclesController: RouteCollection {
     }
     
     func retrieve(req: Request) async throws -> String {
-        let circleId = req.parameters.get("circleId")!
-        return "Circle id = \(circleId)"
+        let circleID = req.parameters.get("circleID")!
+        return "Circle ID = \(circleID)"
     }
+    
+//    func edit(req: Request) async throws -> String {
+//
+//    }
+    
+//    func remove(req: Request) async throws -> {
+//
+//    }
 }

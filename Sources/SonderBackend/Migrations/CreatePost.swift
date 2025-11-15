@@ -14,7 +14,7 @@ struct CreatePost: AsyncMigration {
             .field("circle_id", .uuid, .required, .references("circles", "id"))
             .field("author_id", .uuid, .required, .references("users", "id"))
             .field("content", .string, .required)
-            .field("created_at", .datetime, .required)
+            .field("created_at", .datetime)
             .field("last_modified", .datetime)
             .create()
     }
