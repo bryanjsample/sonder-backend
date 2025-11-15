@@ -18,4 +18,7 @@ func routes(_ app: Application) throws {
     // establish all endpoints to engage with a post
     try app.register(collection: PostsController())
     
+    // establish all endpoints to engage with a comment
+    try app.register(collection: CommentsController())
+    
 }

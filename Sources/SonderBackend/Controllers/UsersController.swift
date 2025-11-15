@@ -14,7 +14,7 @@ struct UsersController: RouteCollection {
         users.get(use: retrieveAll)
         users.post(use: createUser)
         
-        users.group(":userId") { user in
+        users.group(":userID") { user in
             user.get(use: retrieve)
         }
     }
@@ -28,7 +28,7 @@ struct UsersController: RouteCollection {
     }
     
     func retrieve(req: Request) async throws -> String {
-        let userId = req.parameters.get("userId")!
-        return "User id = \(userId)"
+        let userID = req.parameters.get("userID")!
+        return "User ID = \(userID)"
     }
 }

@@ -9,23 +9,39 @@ import Vapor
 
 struct PostsController: RouteCollection {
     func boot(routes: any RoutesBuilder) throws {
-        let posts = routes.grouped("circles", ":circleId", "posts")
+        let posts = routes.grouped("circles", ":circleID", "posts")
         
         posts.get(use: retrieveAll)
+        posts.post(use: createPost)
         
-        posts.group(":postId") { post in
+        posts.group(":postID") { post in
             post.get(use: retrieve)
+//            post.patch(use: edit)
+//            post.delete(use: remove)
         }
     }
     
     func retrieveAll(req: Request) async throws -> String {
-        let circleId = req.parameters.get("circleId")!
-        return "These are Circle \(circleId)'s posts"
+        let circleID = req.parameters.get("circleID")!
+        return "These are Circle \(circleID)'s posts"
     }
     
     func retrieve(req: Request) async throws -> String {
-        let circleId = req.parameters.get("circleId")!
-        let postId = req.parameters.get("postId")!
-        return "Circle \(circleId)'s post id = \(postId)"
+        let circleID = req.parameters.get("circleID")!
+        let postID = req.parameters.get("postID")!
+        return "Circle \(circleID)'s post ID = \(postID)"
     }
+    
+    func createPost(req: Request) async throws -> String {
+        "Create a new post"
+    }
+    
+//    func edit(req: Request) async throws -> String {
+//
+//    }
+    
+//    func remove(req: Request) async throws -> {
+//
+//    }
+    
 }
