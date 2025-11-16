@@ -51,7 +51,7 @@ final class User: Model, @unchecked Sendable {
     
     init(
         id: UUID? = nil,
-        circleID: Circle.IDValue = UUID() /*for testing onyl*/,
+        circleID: Circle.IDValue? = nil,
         email: String,
         firstName: String,
         lastName: String,

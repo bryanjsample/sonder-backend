@@ -14,7 +14,7 @@ struct UserDTO: Content {
     var email: String
     var firstName: String
     var lastName: String
-    var username: String
+    var username: String?
     var pictureUrl: String?
     
     func toModel() -> User {
@@ -22,7 +22,9 @@ struct UserDTO: Content {
         model.email = self.email
         model.firstName = self.firstName
         model.lastName = self.lastName
-        model.username = self.username
+        if let username = self.username {
+            model.username = username
+        }
         if let pictureUrl = self.pictureUrl {
             model.pictureUrl = pictureUrl
         }

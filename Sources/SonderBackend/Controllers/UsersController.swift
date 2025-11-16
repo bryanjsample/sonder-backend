@@ -24,35 +24,16 @@ struct UsersController: RouteCollection {
         "Users Homepage"
     }
     
-    func makeTestUser(req: Request) async throws -> UserDTO {
-        let testUser = UserDTO(
-            email: "bryansample@gmail.com",
-            firstName: "Bryan",
-            lastName: "Sample",
-            username: "bsizzle"
-        )
-        return testUser
-//        let encodedResponse = try await testUser.encodeResponse(for: req)
-//        return encodedResponse
-    }
-    
     func createUser(req: Request) async throws -> Response {
-        
-        // for testing
-        let userDTO = try await makeTestUser(req: req)
-        
-//        // decode to DTO
-//        let userDTO = try req.query.decode(UserDTO.self)
-        // convert to object
+        // decode request
+        let userDTO = try req.content.decode(UserDTO.self)
         let user = userDTO.toModel()
         // check if user exists based off email, send response and reset register process
         if try await userExists(user, on: req.db) {
-            // send back response that user exists and reset register process
-            return try await userDTO.encodeResponse(for: req)
+            return Response(status: .conflict, body: "User already exists")
         } else {
-            // add user to database
             try await user.save(on: req.db)
-            return try await userDTO.encodeResponse(for: req)
+            return Response(status: .created, body: "User created")
         }
     }
     
