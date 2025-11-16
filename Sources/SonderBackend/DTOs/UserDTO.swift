@@ -31,3 +31,18 @@ struct UserDTO: Content {
         return model
     }
 }
+
+extension UserDTO {
+    init(from user: User) {
+        self.id = user.id
+        self.email = user.email
+        self.firstName = user.firstName
+        self.lastName = user.lastName
+        if let username = user.username {
+            self.username = username
+        }
+        if let pictureUrl = user.pictureUrl {
+            self.pictureUrl = pictureUrl
+        }
+    }
+}

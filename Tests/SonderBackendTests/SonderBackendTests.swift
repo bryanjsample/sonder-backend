@@ -20,9 +20,9 @@ struct SonderBackendTests {
         try await app.asyncShutdown()
     }
     
-    @Test("Test /user POST")
+    @Test("Test /users POST")
     func createUser() async throws {
-        let newUser = UserDTO(email: "bryanjsample@yahoo.com", firstName: "Bryan", lastName: "Sample", username: "bsizzle")
+        let newUser = UserDTO(email: "bryanjsample@yahoo.com", firstName: "Bryan", lastName: "Sample", username: "bsizzle", pictureUrl: nil)
         try await withApp { app in
             try await app.testing().test(.POST, "users", beforeRequest: { req in
                 print(req.content)
@@ -40,4 +40,18 @@ struct SonderBackendTests {
             })
         }
     }
+    
+    @Test("Test /users/:userID GET")
+    func getUser() async throws {
+        let newUser = User(email: "richieflores@gmail.com", firstName: "Richie", lastName: "Flores", username: "cstitans22", pictureUrl: nil)
+        try await withApp { app in
+            try await newUser.save(on: app.db)
+            let newUserID = newUser.id?.uuidString ?? "id_missing"
+            try await app.testing().test(.GET, "users/\(newUserID)", afterResponse: {res in
+                print(res.content)
+                #expect(res.status == .ok)
+            })
+        }
+    }
 }
+
