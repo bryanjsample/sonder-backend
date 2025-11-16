@@ -67,7 +67,6 @@ struct UsersController: RouteCollection {
     func retrieve(req: Request) async throws -> UserDTO {
         let userIDParam = try req.parameters.require("userID")
         guard let userUUID = UUID(uuidString: userIDParam) else {
-            print("userIDParam = \(userIDParam)")
             throw Abort(.badRequest, reason: "Invalid user ID")
         }
         guard let user = try await User.find(userUUID, on: req.db) else {

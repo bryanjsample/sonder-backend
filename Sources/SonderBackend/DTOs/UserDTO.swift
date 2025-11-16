@@ -18,23 +18,21 @@ struct UserDTO: Content {
     var pictureUrl: String?
     
     func toModel() -> User {
-        let model = User()
-        model.email = self.email
-        model.firstName = self.firstName
-        model.lastName = self.lastName
-        if let username = self.username {
-            model.username = username
-        }
-        if let pictureUrl = self.pictureUrl {
-            model.pictureUrl = pictureUrl
-        }
-        return model
+        return User(
+            email: self.email,
+            firstName: self.firstName,
+            lastName: self.lastName,
+            username: self.username ?? nil,
+            pictureUrl: self.pictureUrl ?? nil
+        )
     }
 }
 
 extension UserDTO {
     init(from user: User) {
-        self.id = user.id
+        if let userID = user.id {
+            self.id = userID
+        }
         self.email = user.email
         self.firstName = user.firstName
         self.lastName = user.lastName

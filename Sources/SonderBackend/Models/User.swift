@@ -26,11 +26,11 @@ final class User: Model, @unchecked Sendable {
     @Children(for: \.$host)
     var events: [CalendarEvent]
     
-    @Field(key: "first_name")
-    var firstName: String
-    
     @Field(key: "email")
     var email: String
+    
+    @Field(key: "first_name")
+    var firstName: String
     
     @Field(key: "last_name")
     var lastName: String
