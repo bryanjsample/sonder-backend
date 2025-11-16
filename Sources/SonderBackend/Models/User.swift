@@ -14,8 +14,8 @@ final class User: Model, @unchecked Sendable {
     @ID(key: .id)
     var id: UUID?
     
-    @Parent(key: "circle_id")
-    var circle: Circle
+    @OptionalParent(key: "circle_id")
+    var circle: Circle?
     
     @Children(for: \.$author)
     var posts: [Post]
