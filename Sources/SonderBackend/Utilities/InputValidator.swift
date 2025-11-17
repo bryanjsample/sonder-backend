@@ -5,14 +5,35 @@
 //  Created by Bryan Sample on 11/16/25.
 //
 
-import Vapor
-import Fluent
+import Foundation
 
 enum InputValidator {
     
     // necessary for user inputs
     
     static func validateString(data: String, inputField: InputField) throws {
+        func usesOauthHost() throws -> Bool {
+            let oauthHosts = ["googleusercontent.com", "ggpht.com", "lh3.googleusercontent.com"]
+            guard let components = URLComponents(string: trimmed) else {
+                throw ValidationError("URL does not have valid components")
+            }
+            print(components.host ?? "host is missing")
+            return oauthHosts.contains(components.host ?? "")
+        }
+        
+        func validateRegex(newPattern: String? = nil) throws {
+            let pattern = newPattern ?? inputField.regexPattern
+            
+            let regex = try NSRegularExpression(pattern: pattern, options: [.caseInsensitive])
+            
+            let range = NSRange(location: 0, length: trimmed.utf16.count)
+            guard regex.firstMatch(in: trimmed, range: range) != nil else {
+                print("\(data) is not a valid \(inputField.description)")
+                throw ValidationError("Invalid \(inputField.description) type")
+            }
+            print("\(data) is a valid \(inputField.description)")
+        }
+        
         let trimmed = data.trimmingCharacters(in: .whitespacesAndNewlines)
         
         guard !trimmed.isEmpty else {
@@ -20,15 +41,18 @@ enum InputValidator {
             throw ValidationError("\(inputField.description) cannot be empty")
         }
         
-        let pattern = inputField.regexPattern
-        let regex = try NSRegularExpression(pattern: pattern, options: [.caseInsensitive])
-        
-        let range = NSRange(location: 0, length: trimmed.utf16.count)
-        guard regex.firstMatch(in: trimmed, range: range) != nil else {
-            print("\(data) is not a valid \(inputField.description)")
-            throw ValidationError("Invalid \(inputField.description) type")
+        switch inputField.description {
+        case "pictureUrl":
+            if try usesOauthHost() {
+                try validateRegex()
+                print("\(data) uses an OAuth host for it's \(inputField.description)")
+            } else {
+                let newPattern = #"^https?:\/\/[A-Za-z0-9.-]+(?:\/[^\s?#<>%]+)*\.(?:jpg|jpeg|png|gif|webp|bmp|svg)(?:\?[^\s#<>%]*)?(?:#[^\s<>%]*)?$"#
+                try validateRegex(newPattern: newPattern)
+            }
+        default:
+            try validateRegex()
         }
-        print("\(data) is a valid \(inputField.description)")
     }
     
     static func validateID(_ id: UUID) {

@@ -30,7 +30,7 @@ enum InputField: Hashable, CustomStringConvertible {
         case .username:
             return #"^[a-zA-Z][a-zA-Z0-9_]{2,14}$"# // min length of 3 max length of 15
         case .pictureUrl:
-            return #"^https?:\/\/[A-Za-z0-9.-]+(?:\/[^\s?#<>]*)?(?:\?[^\s#<>]*)?(?:#[^\s<>]*)?$"#
+            return #"^https?:\/\/[A-Za-z0-9.-]+(?:\/[^\s?#<>%]*)?(?:\?[^\s#<>%]*)?(?:#[^\s<>%]*)?$"#
         }
     }
 }

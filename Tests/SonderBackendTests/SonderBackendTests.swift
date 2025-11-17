@@ -216,28 +216,30 @@ struct SonderBackendTests {
     @Test("Test pictureUrl validation on array of pictureUrls")
     func validatePictureUrls() async throws {
         let validPictureUrls = [
-            "https://lh3.googleusercontent.com/a-/AOh14GiAbCdEf",
-            "https://lh3.googleusercontent.com/ogw/AAEL12345?w=200-h=200",
-            "https://example.com/images/profile.jpg",
-            "http://cdn.myapp.io/user/123/avatar.png",
-            "https://static.server.net/u/photo.webp",
-            "https://profiles.google.com/user/photo",
-            "https://images.domain.org/users/abc123/profile.jpeg?size=400",
-            "https://mycdn.cloudhost.com/avatars/avatar123",
-            "https://example.io/pfp.svg#v2",
-            "https://sub.domain.com/path/to/resource/photo.gif",
+            "https://lh3.googleusercontent.com/a-/AOh14GgHijklmn",
+            "https://lh3.googleusercontent.com/ogw/AAELabc123?w=200-h=200",
+            "https://lh3.googleusercontent.com/p/AF1QipPp9d0YxL1?sz=256",
+            "https://lh3.googleusercontent.com/abcd1234=w240-h240",
+            "https://ggpht.com/someuser/profile123",
+
+            "https://cdn.example.com/users/12/avatar.png",
+            "http://images.site.net/pfps/user123.webp",
+            "https://static.domain.io/profiles/u_44/photo.jpg?size=400",
+            "https://myapp-images.s3.amazonaws.com/u1/avatar.jpeg",
+            "https://sub.domain.org/path/to/img/profile.svg#v2",
         ]
         
         let invalidPictureUrls = [
-            "ftp://example.com/image.jpg",                     // unsupported scheme
-            "javascript:alert('xss')",                         // dangerous scheme
-            "data:image/png;base64,iVBORw0KGgoAAAANSUhEU",     // embedded data URL
-            "https://",                                        // incomplete URL
-            "example.com/image.png",                           // missing scheme
-            "https:// domain .com/photo.jpg",                  // spaces in host
-            "https:///photo.jpg",                              // malformed
-            "https://evil.com/<script>",                       // unsafe characters
-            "https://",                                        // host missing
+            "ftp://lh3.googleusercontent.com/a-/AOh14GgHijklmn",     // wrong scheme
+            "javascript:alert('xss')",                               // dangerous
+            "https://evil.com/<script>",                             // unsafe chars
+            "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAA",        // data URL not allowed
+            "https://",                                              // incomplete
+            "example.com/avatar.png",                                // no scheme
+            "https:///broken.com/img.png",                           // malformed
+            "http://domain.com/image",                               // no extension + non-OAuth
+            "https://domain.com/path with spaces/photo.png",         // spaces
+            "https://domain.com/img/%ZZ.png",                        // invalid escape
 
         ]
         
@@ -251,7 +253,7 @@ struct SonderBackendTests {
             "\t\t",
             " \n \t ",
             "",
-            "\r\n",
+            "\r\n", 
         ]
         
         for pictureUrl in validPictureUrls {
