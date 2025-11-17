@@ -23,9 +23,7 @@ struct UsersController: RouteCollection {
     
     func createUser(req: Request) async throws -> Response {
         let dto = try req.content.decode(UserDTO.self)
-        
         let sanitizedDTO = try validateAndSanitize(dto)
-        
         let user = sanitizedDTO.toModel()
         
         if try await userExists(user, on: req.db) {
@@ -50,7 +48,7 @@ struct UsersController: RouteCollection {
     }
     
     func edit(req: Request) async throws ->  Response {
-        func transferFields(user: User, dto: UserDTO) {
+        func transferFields(_ dto: UserDTO, _ user: User, ) {
             user.email = dto.email
             user.firstName = dto.firstName
             user.lastName = dto.lastName
@@ -65,22 +63,13 @@ struct UsersController: RouteCollection {
         guard let userUUID = UUID(uuidString: userIDParam) else {
             throw Abort(.badRequest, reason: "Invalid user ID")
         }
-        
         guard let user = try await User.find(userUUID, on: req.db) else {
             throw Abort(.notFound, reason: "User does not exist")
         }
-        
-        print(user)
-        
         let dto = try req.content.decode(UserDTO.self)
-        
         let sanitizedDTO = try validateAndSanitize(dto)
         
-        transferFields(user: user, dto: sanitizedDTO)
-        
-        print(user)
-        
-        print(user.id?.uuidString ?? "no id on sanitized user")
+        transferFields(sanitizedDTO, user)
         
         if try await userExists(user, on: req.db) {
             try await user.update(on: req.db)
@@ -94,9 +83,7 @@ struct UsersController: RouteCollection {
     
     func remove(req: Request) async throws -> Response {
         let dto = try req.content.decode(UserDTO.self)
-        
         let sanitizedDTO = try validateAndSanitize(dto)
-        
         let user = sanitizedDTO.toModel()
         
         if try await userExists(user, on: req.db) {
