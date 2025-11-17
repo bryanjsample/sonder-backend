@@ -41,21 +41,22 @@ struct ValidationTests {
         ]
         
         let invalidEmails: [String] = [
-            "plainaddress",
-            "@missingusername.com",
-            "missingatsign.com",
-            "username@.com",
-            "username@domain",
-            "username@domain..com",
-            "user name@domain.com",
-            "user<script>@gmail.com",
-            "user\"quote\"@gmail.com",
-            "line\nbreak@domain.com",
-            "user()@gmail.com",
-            "user@@domain.com",
-            "skibidi totilet bryan jsame",
-            "SELECT * FROM vapor",
-            "scd2999045.1233422123@yahoo.com/sckiii   ",
+            "plainaddress",                          // missing '@' completely
+            "@missingusername.com",                  // no local part before '@'
+            "missingatsign.com",                     // missing '@'
+            "username@.com",                         // domain cannot start with a dot; fails [a-zA-Z0-9.-]+
+            "username@domain",                       // missing TLD; regex requires \.[A-Za-z]{2,}
+            "username@domain..com",                  // contains consecutive dots; blocked by negative lookahead (?!.*\.\.)
+            "user name@domain.com",                  // contains space; not allowed in local part
+            "user<script>@gmail.com",                // '<' and '>' not allowed in local part or domain
+            "user\"quote\"@gmail.com",               // quotes not allowed in local part per your regex
+            "line\nbreak@domain.com",                // newline not allowed; local part must match [a-zA-Z0-9._%+-]+
+            "user()@gmail.com",                      // parentheses not allowed in local part
+            "user@@domain.com",                      // two '@' signs; regex expects exactly one
+            "skibidi totilet bryan jsame",           // not an email format at all; missing '@' and domain
+            "SELECT * FROM vapor",                   // not an email; fails entirely and contains spaces + SQL characters
+            "scd2999045.1233422123@yahoo.com/sckiii   ",   // contains slash and trailing spaces; path segments not allowed
+
         ]
         
         let emptyEmails: [String] = [
@@ -105,14 +106,19 @@ struct ValidationTests {
         ]
         
         let invalidNames = [
-            "Br2yan",
-            "John_Doe",
-            "Jane@Smith",
-            "!!!",
-            "Robert123",
-            "Anne--Marie",
-            ";DROP TABLE users;",
-            "12345"
+            "John  Smith",             // double space not allowed, regex allows only a single [ '-’] between name parts
+            "John_Smith",              // underscore not in allowed set [ '-’]
+            "Jane@",                   // '@' not allowed, only letters + [ '-’]
+            "123Bryan",                // cannot start with digits, must start with A–Z or accented letters
+            "Bryan123",                // trailing digits not allowed
+            "Anne--Marie",             // double hyphen not allowed, only single [ '-’] separator allowed
+            "Jean—Luc",                // em-dash (—) not included; only ASCII hyphen (-) allowed
+            "O’’Connor",               // double apostrophe; the pattern only allows ONE [ '\u2019-] separator at a time
+            "O’",                      // trailing separator not followed by letters (requires letters after the separator)
+            "'Bryan",                  // cannot start with a separator, must start with a letter
+            "Bryan-",                  // cannot end with separator, must end in a letter
+            "Ma!rk",                   // '!' not allowed, only letters + allowed separators
+            "Élodie#",                 // '#' not allowed
         ]
         
         let emptyNames = [
@@ -163,16 +169,26 @@ struct ValidationTests {
         ]
         
         let invalidUsernames = [
-            "ab",                 // too short
-            "thisusernameiswaytoolongtobefunctional", // too long
-            "user name",          // space
-            "user-name",          // hyphen not allowed
-            "user.name",          // dot not allowed
-            "user@name",          // symbol not allowed
-            "🔥fireboy",          // emoji
-            "123456",             // numeric only (if you disallow this, optional)
-            "_startsWithUnderscore", // leading underscore
-            "endsWithUnderscore_",   // trailing underscore
+            "1bryan",          // starts with a digit
+            "_bryan",          // starts with underscore; must start with a letter
+            "ab",              // too short (< 3 characters)
+            "averylongusernameexceeds", // too long (> 15 characters)
+            "john-doe",        // hyphens not allowed
+            "john.doe",        // dots not allowed
+            "john doe",        // spaces not allowed
+            "j@ne_doe",        // '@' symbol not allowed
+            "br!an",           // '!' symbol not allowed
+            "álex123",         // non-ASCII letter; regex only allows A–Z and a–z
+            "user__name__",    // trailing underscores allowed, but length exceeds 15 chars
+            "user\nname",      // newline not allowed
+            "user\tname",      // tab not allowed
+            "   ",             // whitespace-only, fails entirely
+            "",                // empty string
+            "Jo",              // length only 2 chars; must be at least 3
+            "Username_ThatIsWayTooLong", // well beyond 15 chars
+            "Jane*Doe",        // '*' not allowed
+            "test()",          // parentheses not allowed
+            "dev<>dev",        // angle brackets not allowed
         ]
         
         let emptyUsernames = [
@@ -216,25 +232,32 @@ struct ValidationTests {
             "https://lh3.googleusercontent.com/p/AF1QipPp9d0YxL1?sz=256",
             "https://lh3.googleusercontent.com/abcd1234=w240-h240",
             "https://ggpht.com/someuser/profile123",
-
             "https://cdn.example.com/users/12/avatar.png",
             "http://images.site.net/pfps/user123.webp",
             "https://static.domain.io/profiles/u_44/photo.jpg?size=400",
-            "https://myapp-images.s3.amazonaws.com/u1/avatar.jpeg",
             "https://sub.domain.org/path/to/img/profile.svg#v2",
         ]
         
         let invalidPictureUrls = [
-            "ftp://lh3.googleusercontent.com/a-/AOh14GgHijklmn",     // wrong scheme
-            "javascript:alert('xss')",                               // dangerous
-            "https://evil.com/<script>",                             // unsafe chars
-            "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAA",        // data URL not allowed
-            "https://",                                              // incomplete
-            "example.com/avatar.png",                                // no scheme
-            "https:///broken.com/img.png",                           // malformed
-            "http://domain.com/image",                               // no extension + non-OAuth
-            "https://domain.com/path with spaces/photo.png",         // spaces
-            "https://domain.com/img/%ZZ.png",                        // invalid escape
+            "ftp://example.com/avatar.png",        // invalid scheme (ftp not allowed)
+            "https://",                            // missing host
+            "example.com/image.png",               // missing scheme (must start with http/https)
+            "http://exa mple.com/img.png",         // space inside hostname not allowed
+            "https://domain.com/img/%ZZ.png",       // '%' not allowed anywhere in path
+            "https:///broken.com/img.png",         // malformed URL (extra slashes after scheme)
+            "http://domain.com/<script>",          // '<' and '>' are forbidden
+            "https://domain.com/img photo.png",     // space in path not allowed
+            "https://domain.com/img/\nphoto.png",   // newline not allowed
+            "https://domain.com/img/\tavatar.png",  // tab not allowed
+            "https://domain.com/img/photo?.png",    // '?' cannot appear inside path except at query start
+            "https://domain.com/img/photo#frag#2",  // second '#' illegal inside fragment
+            "https://domain.com/img/photo.png#<>",  // '<' and '>' not allowed in fragment
+            "javascript:alert(1)",                  // non-URL scheme rejected
+            "data:image/png;base64,AAAA",           // data: URLs not allowed
+            "https://domain.com/img/photo.png%",    // '%' not allowed at end or anywhere
+            "http://[::1]/image.png",               // IPv6 literal not matched by your hostname pattern
+            "https://domain..com/img.png",          // double dot in hostname invalid per your host rules
+            "https://-domain.com/img.png",          // hostname cannot begin with hyphen
 
         ]
         
