@@ -9,7 +9,21 @@ import Foundation
 
 enum InputValidator {
     
-    // necessary for user inputs
+    static func validateUser(_ user: UserDTO) throws {
+        try validateString(data: user.email, inputField: InputField.email)
+        
+        try validateString(data: user.firstName, inputField: InputField.name)
+        
+        try validateString(data: user.lastName, inputField: InputField.name)
+        
+        if let username = user.username {
+            try validateString(data: username, inputField: InputField.username)
+        }
+        
+        if let pictureUrl = user.pictureUrl {
+            try validateString(data: pictureUrl, inputField: InputField.pictureUrl)
+        }
+    }
     
     static func validateString(data: String, inputField: InputField) throws {
         func usesOauthHost() throws -> Bool {
@@ -58,44 +72,6 @@ enum InputValidator {
     static func validateID(_ id: UUID) {
         
     }
-    
-//    static func validateEmail(_ email: String) throws {
-//        let trimmed = email.trimmingCharacters(in: .whitespacesAndNewlines)
-//        
-//        guard !trimmed.isEmpty else {
-//            print("\(email) is empty")
-//            throw ValidationError("Email cannot be empty")
-//        }
-//        
-//        let pattern = #"^(?!.*\.\.)[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"#
-//        let regex = try NSRegularExpression(pattern: pattern, options: [.caseInsensitive])
-//        
-//        let range = NSRange(location: 0, length: trimmed.utf16.count)
-//        guard regex.firstMatch(in: trimmed, range: range) != nil else {
-//            print("\(email) is not valid")
-//            throw ValidationError("Invalid email format.")
-//        }
-//        print("\(email) is valid")
-//    }
-//    
-//    static func validateName(_ name: String) throws {
-//        let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
-//        
-//        guard !trimmed.isEmpty else {
-//            print("\(name) is empty")
-//            throw ValidationError("Name cannot be empty")
-//        }
-//        
-//        let pattern
-//    }
-//    
-//    static func validateUsername(_ username: String) -> Bool {
-//        true
-//    }
-//    
-//    static func validatePictureUrl(_ pictureUrl: String) -> Bool {
-//        true
-//    }
 }
 
 struct ValidationError: Error, CustomStringConvertible {

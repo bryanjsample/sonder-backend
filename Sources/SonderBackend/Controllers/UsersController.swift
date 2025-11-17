@@ -31,7 +31,12 @@ struct UsersController: RouteCollection {
     func createUser(req: Request) async throws -> Response {
         // decode request
         let userDTO = try req.content.decode(UserDTO.self)
-        let user = userDTO.toModel()
+        
+        try InputValidator.validateUser(userDTO)
+        
+        let sanitizedDTO = InputSanitizer.sanitizeUser(userDTO)
+        
+        let user = sanitizedDTO.toModel()
         // check if user exists based off email, send response and reset register process
         
         // SANITIZE INPUT

@@ -26,9 +26,19 @@ struct UserDTO: Content {
             pictureUrl: self.pictureUrl ?? nil
         )
     }
+    
 }
 
 extension UserDTO {
+    init() {
+        self.id = nil
+        self.email = ""
+        self.firstName = ""
+        self.lastName = ""
+        self.username = nil
+        self.pictureUrl = nil
+    }
+    
     init(from user: User) {
         if let userID = user.id {
             self.id = userID
