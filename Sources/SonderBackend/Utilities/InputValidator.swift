@@ -31,7 +31,7 @@ enum InputValidator {
             guard let components = URLComponents(string: trimmed) else {
                 throw ValidationError("URL does not have valid components")
             }
-            print(components.host ?? "host is missing")
+            print(components.host ?? "\n\nhost is missing")
             return oauthHosts.contains(components.host ?? "")
         }
         
@@ -68,10 +68,7 @@ enum InputValidator {
             try validateRegex()
         }
     }
-    
-    static func validateID(_ id: UUID) {
-        
-    }
+
 }
 
 struct ValidationError: Error, CustomStringConvertible {

@@ -1,6 +1,6 @@
 //
 //  UsersController.swift
-//  tryingVapor
+//  SonderBackend
 //
 //  Created by Bryan Sample on 11/13/25.
 //
@@ -12,7 +12,6 @@ struct UsersController: RouteCollection {
     func boot(routes: any RoutesBuilder) throws {
         let users = routes.grouped("users")
         
-//        users.get(use: retrieveAll)
         users.post(use: createUser)
         
         users.group(":userID") { user in
@@ -22,24 +21,10 @@ struct UsersController: RouteCollection {
         }
     }
     
-//    func retrieveAll(req: Request) async throws -> String {
-//        "Users Homepage"
-//        // this is a function that would respond with an array of all users in the database regardless of circle
-//        // not necessary at this point
-//    }
-    
     func createUser(req: Request) async throws -> Response {
-        // decode request
-        let userDTO = try req.content.decode(UserDTO.self)
+        let dto = try req.content.decode(UserDTO.self)
         
-        try InputValidator.validateUser(userDTO)
-        
-        let sanitizedDTO = InputSanitizer.sanitizeUser(userDTO)
-        
-        let user = sanitizedDTO.toModel()
-        // check if user exists based off email, send response and reset register process
-        
-        // SANITIZE INPUT
+        let user = try validateAndSanitize(dto)
         
         if try await userExists(user, on: req.db) {
             throw Abort(.badRequest, reason: "User already exists")
@@ -63,6 +48,14 @@ struct UsersController: RouteCollection {
          }
          */
     
+    func validateAndSanitize(_ userDTO: UserDTO) throws -> User {
+        try InputValidator.validateUser(userDTO)
+        
+        let sanitizedDTO = InputSanitizer.sanitizeUser(userDTO)
+        let sanitizedUser = sanitizedDTO.toModel()
+        return sanitizedUser
+    }
+    
     func userExists(_ user: User, on db: any Database) async throws -> Bool {
         return try await User.query(on: db)
             .filter(\.$email == user.email)
@@ -80,7 +73,7 @@ struct UsersController: RouteCollection {
         return UserDTO(from: user)
     }
     
-    //    func edit(req: Request) async throws -> String {
+    //    func edit(req: Request) async throws ->  {
     //
     //    }
         

@@ -13,7 +13,7 @@ func routes(_ app: Application) throws {
     try app.register(collection: CirclesController())
     
     // establish all endpoints to engage with an event
-    try app.register(collection: EventsController())
+    try app.register(collection: CalendarEventsController())
     
     // establish all endpoints to engage with a post
     try app.register(collection: PostsController())

@@ -1,6 +1,6 @@
 //
 //  GroupsController.swift
-//  tryingVapor
+//  SonderBackend
 //
 //  Created by Bryan Sample on 11/13/25.
 //

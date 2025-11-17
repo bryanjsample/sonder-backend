@@ -1,13 +1,13 @@
 //
-//  EventsController.swift
-//  tryingVapor
+//  CalendarEventsController.swift
+//  SonderBackend
 //
 //  Created by Bryan Sample on 11/13/25.
 //
 
 import Vapor
 
-struct EventsController: RouteCollection {
+struct CalendarEventsController: RouteCollection {
     func boot(routes: any RoutesBuilder) throws {
         let events = routes.grouped("circles", ":circleID", "events")
         
