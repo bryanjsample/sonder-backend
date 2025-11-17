@@ -107,7 +107,7 @@ enum InputField: Hashable, CustomStringConvertible {
              "https://-domain.com/img.png",          // hostname cannot begin with hyphen
              "https://domain.com/img/.png",          // path segment starts with '.' which may be allowed in theory but violates your character constraints after splitting
             */
-            return #"^https?:\/\/[A-Za-z0-9]+(?:\.[A-Za-z0-9]+)*+(?:\/[^\s?#<>%]*)?(?:\?[^\s#<>%]*)?(?:#[^\s<>%]*)?$"#
+            return #"^https?:\/\/[A-Za-z0-9]+(?:\.[A-Za-z0-9]+)*+(?:\/[^\s?#<>%]+)*\.(?:jpg|jpeg|png|gif|webp|bmp|svg)(?:\?[^\s#<>%]*)?(?:#[^\s<>%]*)?$"#
         }
     }
 }

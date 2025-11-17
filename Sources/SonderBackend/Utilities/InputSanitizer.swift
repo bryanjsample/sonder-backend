@@ -34,6 +34,9 @@ enum InputSanitizer {
     
     static func sanitizeUser(_ user: UserDTO) -> UserDTO {
         var sanitizedDTO = UserDTO()
+        if let id = user.id {
+            sanitizedDTO.id = id
+        }
         sanitizedDTO.email = sanitizeEmail(user.email)
         sanitizedDTO.firstName = sanitizeName(user.firstName)
         sanitizedDTO.lastName = sanitizeName(user.lastName)

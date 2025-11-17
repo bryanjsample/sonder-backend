@@ -58,11 +58,11 @@ enum InputValidator {
         switch inputField.description {
         case "pictureUrl":
             if try usesOauthHost() {
-                try validateRegex()
+                let oauthPattern = #"^https?:\/\/[A-Za-z0-9]+(?:\.[A-Za-z0-9]+)*+(?:\/[^\s?#<>%]*)?(?:\?[^\s#<>%]*)?(?:#[^\s<>%]*)?$"#
+                try validateRegex(newPattern: oauthPattern)
                 print("\(data) uses an OAuth host for it's \(inputField.description)")
             } else {
-                let newPattern = #"^https?:\/\/[A-Za-z0-9]+(?:\.[A-Za-z0-9]+)*+(?:\/[^\s?#<>%]+)*\.(?:jpg|jpeg|png|gif|webp|bmp|svg)(?:\?[^\s#<>%]*)?(?:#[^\s<>%]*)?$"#
-                try validateRegex(newPattern: newPattern)
+                try validateRegex()
             }
         default:
             try validateRegex()
