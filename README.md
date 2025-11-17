@@ -183,7 +183,8 @@ Foreign-key constraints:
     "posts_author_id_fkey" FOREIGN KEY (author_id) REFERENCES users(id)
     "posts_circle_id_fkey" FOREIGN KEY (circle_id) REFERENCES circles(id)
 Referenced by:
-    TABLE "comments" CONSTRAINT "comments_post_id_fkey" FOREIGN KEY (post_id) REFERENCES posts(id)```
+    TABLE "comments" CONSTRAINT "comments_post_id_fkey" FOREIGN KEY (post_id) REFERENCES posts(id)
+```
 
 ### Comments
 
