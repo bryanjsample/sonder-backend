@@ -15,21 +15,29 @@ struct CircleDTO: Content {
     var description: String
     var pictureUrl: String?
     
-    /*
-     init() {
-     validate user input
-     if no picture then set default
-     }
-     */
-    
     func toModel() -> Circle {
         let model = Circle()
-        model.id = self.id
+        model.id = self.id ?? nil
         model.name = self.name
         model.description = self.description
-        if let pictureUrl = self.pictureUrl {
-            model.pictureUrl = pictureUrl
-        }
+        model.pictureUrl = self.pictureUrl ?? nil
         return model
+    }
+    
+}
+
+extension CircleDTO {
+    init() {
+        self.id = nil
+        self.name = ""
+        self.description = ""
+        self.pictureUrl = nil
+    }
+    
+    init(from circle: Circle) {
+        self.id = circle.id ?? nil
+        self.name = circle.name
+        self.description = circle.description
+        self.pictureUrl = circle.pictureUrl ?? nil
     }
 }

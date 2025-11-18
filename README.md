@@ -33,12 +33,16 @@ swift test
 `serverhost/users`
 
 - POST
+    - Creates a user, expects a JSON encoded UserDTO object
 
 `serverhost/users/{userID}`
 
 - GET
+    - Returns a JSON encoded UserDTO object
 - PATCH
+    - Updates a user, expects a JSON encoded UserDTO object, returns the updated UserDTO object
 - DELETE
+    - Deletes a user.
 
 `serverhost/circles`
 

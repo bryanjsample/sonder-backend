@@ -22,26 +22,12 @@ struct UserDTO: Content {
         
         print("dto = \(self)")
         
-        if let id = self.id {
-            model.id = id
-        } else {
-            model.id = nil
-        }
-        
+        model.id = self.id ?? nil
         model.email = self.email
         model.firstName = self.firstName
         model.lastName = self.lastName
-        
-        if let username = self.username {
-            model.username = username
-        } else {
-            model.username = nil
-        }
-        if let pictureUrl = self.pictureUrl {
-            model.pictureUrl = pictureUrl
-        } else {
-            model.pictureUrl = nil
-        }
+        model.username = self.username ?? nil
+        model.pictureUrl = self.pictureUrl ?? nil
         
         print("model = \(model)")
         
@@ -61,17 +47,11 @@ extension UserDTO {
     }
     
     init(from user: User) {
-        if let userID = user.id {
-            self.id = userID
-        }
+        self.id = user.id ?? nil
         self.email = user.email
         self.firstName = user.firstName
         self.lastName = user.lastName
-        if let username = user.username {
-            self.username = username
-        }
-        if let pictureUrl = user.pictureUrl {
-            self.pictureUrl = pictureUrl
-        }
+        self.username = user.username ?? nil
+        self.pictureUrl = user.pictureUrl ?? nil
     }
 }

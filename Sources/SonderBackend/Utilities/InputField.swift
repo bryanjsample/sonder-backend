@@ -6,7 +6,7 @@
 //
 
 enum InputField: Hashable, CustomStringConvertible {
-    case email, name, username, pictureUrl
+    case email, name, username, pictureUrl, circleName, circleDescription
     
     var description: String {
         switch self {
@@ -18,6 +18,10 @@ enum InputField: Hashable, CustomStringConvertible {
             return "username"
         case .pictureUrl:
             return "pictureUrl"
+        case .circleName:
+            return "circleName"
+        case .circleDescription:
+            return "circleDescription"
         }
     }
     
@@ -108,6 +112,11 @@ enum InputField: Hashable, CustomStringConvertible {
              "https://domain.com/img/.png",          // path segment starts with '.' which may be allowed in theory but violates your character constraints after splitting
             */
             return #"^https?:\/\/[A-Za-z0-9]+(?:\.[A-Za-z0-9]+)*+(?:\/[^\s?#<>%]+)*\.(?:jpg|jpeg|png|gif|webp|bmp|svg)(?:\?[^\s#<>%]*)?(?:#[^\s<>%]*)?$"#
+        case .circleName:
+            return #"^[^\s@#$%<>;{}\\\/]{2,30}$"#
+        case .circleDescription:
+            return #"^[^\s@#$%<>;{}\\\/]{2,150}$"#
+
         }
     }
 }

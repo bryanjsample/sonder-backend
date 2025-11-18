@@ -25,6 +25,16 @@ enum InputValidator {
         }
     }
     
+    static func validateCircle(_ circle: CircleDTO) throws {
+        try validateString(data: circle.name, inputField: InputField.circleName)
+        
+        try validateString(data: circle.description, inputField: InputField.circleDescription)
+        
+        if let pictureUrl = circle.pictureUrl {
+            try validateString(data: pictureUrl, inputField: InputField.pictureUrl)
+        }
+    }
+    
     static func validateString(data: String, inputField: InputField) throws {
         func usesOauthHost() throws -> Bool {
             let oauthHosts = ["googleusercontent.com", "ggpht.com", "lh3.googleusercontent.com"]

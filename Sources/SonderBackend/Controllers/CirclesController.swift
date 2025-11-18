@@ -6,12 +6,12 @@
 //
 
 import Vapor
+import Fluent
 
 struct CirclesController: RouteCollection {
     func boot(routes: any RoutesBuilder) throws {
         let circles = routes.grouped("circles")
-        
-        circles.get(use: retrieveAll)
+
         circles.post(use: createCircle)
         
         circles.group(":circleID") { circle in
@@ -21,18 +21,31 @@ struct CirclesController: RouteCollection {
         }
     }
     
-    func retrieveAll(req: Request) async throws -> String {
-        "Circles Homepage"
-    }
-    
-    func createCircle(req: Request) async throws -> String {
-        "Create a new circle"
+    func createCircle(req: Request) async throws -> Response {
+        let dto = try req.content.decode(CircleDTO.self)
+        let sanitizedDTO = try validateAndSanitize(dto)
+        let circle = sanitizedDTO.toModel()
         
+        if try await circleExists(circle, on: req.db) {
+            throw Abort(.badRequest, reason: "Circle already exists")
+        } else {
+            try await circle.save(on: req.db)
+            let dto = CircleDTO(from: circle)
+            return Response(status: .created, body: .init(data: try JSONEncoder().encode(dto)))
+        }
     }
     
-    func retrieve(req: Request) async throws -> String {
-        let circleID = req.parameters.get("circleID")!
-        return "Circle ID = \(circleID)"
+    func retrieve(req: Request) async throws -> Response {
+        let circleIDParam = try req.parameters.require("circleID")
+        // let circleID = sanitizeandvalidate(circleIDParam)
+        guard let circleUUID = UUID(uuidString: circleIDParam) else {
+            throw Abort(.notFound, reason: "Invalid circle ID")
+        }
+        guard let circle = try await Circle.find(circleUUID, on: req.db) else {
+            throw Abort(.notFound, reason: "Circle does not exist")
+        }
+        let dto = CircleDTO(from: circle)
+        return Response(status: .ok, body: .init(data: try JSONEncoder().encode(dto)))
     }
     
 //    func edit(req: Request) async throws -> String {
@@ -42,4 +55,14 @@ struct CirclesController: RouteCollection {
 //    func remove(req: Request) async throws -> {
 //
 //    }
+    
+    func circleExists(_ circle: Circle, on db: any Database) async throws -> Bool {
+        return try await Circle.find(circle.id, on: db) != nil
+    }
+    
+    func validateAndSanitize(_ circleDTO: CircleDTO) throws -> CircleDTO {
+        try InputValidator.validateCircle(circleDTO)
+        let sanitizedDTO = InputSanitizer.sanitizeCircle(circleDTO)
+        return sanitizedDTO
+    }
 }
