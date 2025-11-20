@@ -11,25 +11,19 @@ enum InputValidator {
     
     static func validateUser(_ user: UserDTO) throws {
         try validateString(data: user.email, inputField: InputField.email)
-        
         try validateString(data: user.firstName, inputField: InputField.name)
-        
         try validateString(data: user.lastName, inputField: InputField.name)
-        
         if let username = user.username {
             try validateString(data: username, inputField: InputField.username)
         }
-        
         if let pictureUrl = user.pictureUrl {
             try validateString(data: pictureUrl, inputField: InputField.pictureUrl)
         }
     }
     
     static func validateCircle(_ circle: CircleDTO) throws {
-        try validateString(data: circle.name, inputField: InputField.circleName)
-        
-        try validateString(data: circle.description, inputField: InputField.circleDescription)
-        
+        try validateString(data: circle.name, inputField: InputField.title)
+        try validateString(data: circle.description, inputField: InputField.description)
         if let pictureUrl = circle.pictureUrl {
             try validateString(data: pictureUrl, inputField: InputField.pictureUrl)
         }
@@ -37,10 +31,21 @@ enum InputValidator {
     
     static func validatePost(_ post: PostDTO) throws {
         try validateCircle(CircleDTO(from: post.circle))
-        
         try validateUser(UserDTO(from: post.author))
-        
-        try validateString(data: post.content, inputField: InputField.postContent)
+        try validateString(data: post.content, inputField: InputField.textBlock)
+    }
+    
+    static func validateEvent(_ event: CalendarEventDTO) throws {
+        try validateUser(UserDTO(from: event.host))
+        try validateCircle(CircleDTO(from: event.circle))
+        try validateString(data: event.title, inputField: InputField.title)
+        try validateString(data: event.description, inputField: InputField.description)
+        guard event.startTime < event.endTime else {
+            throw ValidationError("Event start time must be before it's end time")
+        }
+        guard Date() <= event.startTime else {
+            throw ValidationError("Event cannot start in the past")
+        }
     }
     
     static func validateString(data: String, inputField: InputField) throws {

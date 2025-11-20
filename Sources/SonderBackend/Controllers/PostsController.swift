@@ -28,6 +28,32 @@ struct PostsController: RouteCollection {
             userPosts.get(use: retrieveUserPosts)
         }
     }
+
+    
+    func retrieveCirclePosts(req: Request) async throws -> [PostDTO] {
+        let circle = try await helper.getCircle(req: req)
+        
+        return try await circle.$posts.query(on: req.db)
+            .all()
+            .map { PostDTO(from: $0)}
+    }
+    
+    func retrieveUserPosts(req: Request) async throws -> [PostDTO] {
+        let circle = try await helper.getCircle(req: req)
+        let user = try await helper.getUser(req: req)
+        
+        return try await circle.$posts.query(on: req.db)
+            .filter(\.$author.$id == user.id!)
+            .all()
+            .map { PostDTO(from: $0)}
+    }
+    
+    func retrievePost(req: Request) async throws -> PostDTO {
+        let circle = try await helper.getCircle(req: req)
+        let post = try await helper.getPost(req: req)
+        
+        return PostDTO(from: post)
+    }
     
     func createPost(req: Request) async throws -> PostDTO {
         let circle = try await helper.getCircle(req: req)
@@ -47,31 +73,6 @@ struct PostsController: RouteCollection {
             try await post.save(on: req.db)
             return PostDTO(from: post)
         }
-    }
-    
-    func retrieveCirclePosts(req: Request) async throws -> [PostDTO] {
-        let circle = try await helper.getCircle(req: req)
-        let user = try await helper.getUser(req: req)
-        
-        return try await circle.$posts.query(on: req.db).all()
-            .map { PostDTO(from: $0)}
-    }
-    
-    func retrieveUserPosts(req: Request) async throws -> [PostDTO] {
-        let circle = try await helper.getCircle(req: req)
-        let user = try await helper.getUser(req: req)
-        
-        return try await circle.$posts.query(on: req.db)
-            .filter(\.$author.$id == user.id!)
-            .all()
-            .map { PostDTO(from: $0)}
-    }
-    
-    func retrievePost(req: Request) async throws -> PostDTO {
-        let circle = try await helper.getCircle(req: req)
-        let post = try await helper.getPost(req: req)
-        
-        return PostDTO(from: post)
     }
     
     func editPost(req: Request) async throws -> PostDTO {

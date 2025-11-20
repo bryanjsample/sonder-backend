@@ -8,6 +8,10 @@
 import Vapor
 
 struct ControllerHelper {
+    
+    // VALIDATE AND SANITIZE ALL INCOMING IDS
+    
+    
     func getCircle(req: Request) async throws -> Circle {
         let circleIDParam = try req.parameters.require("circleID")
         // let circleID = sanitize and validate(param)
@@ -41,5 +45,16 @@ struct ControllerHelper {
             throw Abort(.notFound, reason: "Post does not exist")
         }
         return post
+    }
+    
+    func getCalendarEvent(req: Request) async throws -> CalendarEvent {
+        let eventIDParam = try req.parameters.require("eventID")
+        guard let eventUUID = UUID(uuidString: eventIDParam) else {
+            throw Abort(.badRequest, reason: "Invalid post ID")
+        }
+        guard let calendarEvent = try await CalendarEvent.find(eventUUID, on: req.db) else {
+            throw Abort(.notFound, reason: "Event does not exist")
+        }
+        return calendarEvent
     }
 }

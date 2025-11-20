@@ -13,12 +13,14 @@ struct CommentDTO: Content {
     var post: Post
     var author: User
     var content: String
+    var createdAt: Date?
     
     func toModel() -> Comment {
         let model = Comment()
         model.post = self.post
         model.author = self.author
         model.content = self.content
+        model.createdAt = self.createdAt
         return model
     }
 }
