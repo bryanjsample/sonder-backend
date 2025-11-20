@@ -27,5 +27,85 @@ struct CircleTests {
         try await app.asyncShutdown()
     }
     
+    // Sample DTOs for creating circles (no edge-case validation here)
+    let circleDTOs: [CircleDTO] = [
+        CircleDTO(name: "iOS Devs", description: "A circle for iOS developers", pictureUrl: nil),
+        CircleDTO(name: "Vapor Backend", description: "Server-side Swift enthusiasts", pictureUrl: "https://cdn.example.com/circles/vapor.png"),
+        CircleDTO(name: "Data Science", description: "Discuss ML and data engineering", pictureUrl: nil),
+        CircleDTO(name: "Design Systems", description: "UI/UX and design tokens", pictureUrl: "https://images.site.net/circles/design.webp"),
+        CircleDTO(name: "Open Source", description: "Contributors welcome", pictureUrl: nil),
+    ]
     
+    // Sample models for GET/PATCH/DELETE flows
+    let circles: [Circle] = [
+        Circle(name: "SwiftUI", description: "All things SwiftUI", pictureUrl: nil),
+        Circle(name: "Kotlin Buddies", description: "Friendly neighbors across the aisle", pictureUrl: nil),
+        Circle(name: "Rustaceans", description: "Rust learning circle", pictureUrl: "https://static.domain.io/circles/rustaceans.png"),
+        Circle(name: "Databases", description: "Postgres, SQLite, and more", pictureUrl: nil),
+        Circle(name: "Game Dev", description: "Graphics and gameplay", pictureUrl: "https://cdn.example.com/circles/gamedev.jpg"),
+    ]
+    
+    @Test("Test /circles POST")
+    func createCircle() async throws {
+        try await withApp { app in
+            for dto in circleDTOs {
+                try await app.testing().test(.POST, "circles", beforeRequest: { req in
+                    try req.content.encode(dto)
+                    print("\n\n\(req.content)")
+                }, afterResponse: { res in
+                    #expect(res.status == .created)
+                })
+            }
+        }
+    }
+    
+    @Test("Test /circles/:circleID GET")
+    func getCircle() async throws {
+        try await withApp { app in
+            for circle in circles {
+                try await circle.save(on: app.db)
+                let circleID = circle.id?.uuidString ?? "id_missing"
+                try await app.testing().test(.GET, "circles/\(circleID)", afterResponse: { res in
+                    print("\n\n \(res.content)")
+                    #expect(res.status == .ok)
+                })
+            }
+        }
+    }
+    
+    @Test("Test /circles/:circleID PATCH")
+    func patchCircle() async throws {
+        try await withApp { app in
+            for circle in circles {
+                try await circle.save(on: app.db)
+                let circleID = circle.id?.uuidString ?? "id_missing"
+                var dto = CircleDTO(from: circle)
+                dto.description = "PATCHED DESCRIPTION"
+                try await app.testing().test(.PATCH, "circles/\(circleID)", beforeRequest: { req in
+                    try req.content.encode(dto)
+                    print("\n\n\(req.content)")
+                }, afterResponse: { res in
+                    #expect(res.status == .ok)
+                })
+            }
+        }
+    }
+    
+    @Test("Test /circles/:circleID DELETE")
+    func deleteCircle() async throws {
+        try await withApp { app in
+            for circle in circles {
+                try await circle.save(on: app.db)
+                let circleID = circle.id?.uuidString ?? "id_missing"
+                let dto = CircleDTO(from: circle)
+                try await app.testing().test(.DELETE, "circles/\(circleID)", beforeRequest: { req in
+                    try req.content.encode(dto)
+                    print("\n\n\(req.content)")
+                }, afterResponse: { res in
+                    #expect(res.status == .ok)
+                })
+            }
+        }
+    }
 }
+

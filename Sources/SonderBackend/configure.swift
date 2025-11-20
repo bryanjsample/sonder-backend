@@ -16,7 +16,11 @@ public func configure(_ app: Application) async throws {
         database: Environment.get("DATABASE_NAME") ?? "sonder_testing",
         tls: .prefer(try .init(configuration: .clientDefault)))
     ), as: .psql)
-
+    if app.environment == .testing {
+        app.logger.logLevel = .debug
+    } else {
+        app.logger.logLevel = .info
+    }
     app.migrations.add(CreateCircle())
     app.migrations.add(CreateUser())
     app.migrations.add(CreateCalendarEvent())

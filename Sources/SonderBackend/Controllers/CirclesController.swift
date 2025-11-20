@@ -16,8 +16,8 @@ struct CirclesController: RouteCollection {
         
         circles.group(":circleID") { circle in
             circle.get(use: retrieve)
-//            circle.patch(use: edit)
-//            circle.delete(use: remove)
+            circle.patch(use: edit)
+            circle.delete(use: remove)
         }
     }
     
@@ -48,13 +48,53 @@ struct CirclesController: RouteCollection {
         return Response(status: .ok, body: .init(data: try JSONEncoder().encode(dto)))
     }
     
-//    func edit(req: Request) async throws -> String {
-//
-//    }
+    func edit(req: Request) async throws -> Response {
+        func transferFields(_ dto: CircleDTO, _ circle: Circle) {
+            circle.name = dto.name
+            circle.description = dto.description
+            if let picureUrl = dto.pictureUrl {
+                circle.pictureUrl = picureUrl
+            }
+        }
+        let circleIDParam = try req.parameters.require("circleID")
+        // let circleID = sanititzeandvalidate(param)
+        guard let circleUUID = UUID(uuidString: circleIDParam) else {
+            throw Abort(.badRequest, reason: "Invalid circle ID")
+        }
+        guard let circle = try await Circle.find(circleUUID, on: req.db) else {
+            throw Abort(.notFound, reason: "Circle does not exist")
+        }
+        let dto = try req.content.decode(CircleDTO.self)
+        let sanitizedDTO = try validateAndSanitize(dto)
+        
+        transferFields(sanitizedDTO, circle)
+        
+        if try await circleExists(circle, on: req.db) {
+            try await circle.update(on: req.db)
+        } else {
+            throw Abort(.notFound, reason: "Circle does not exist")
+        }
+        
+        let responseDTO = CircleDTO(from: circle)
+        return Response(status: .ok, body: .init(data: try JSONEncoder().encode(responseDTO)))
+    }
     
-//    func remove(req: Request) async throws -> {
-//
-//    }
+    func remove(req: Request) async throws -> Response {
+        let circleIDParam = try req.parameters.require("circleID")
+        // let circleID = sanititzeandvalidate(param)
+        guard let circleUUID = UUID(uuidString: circleIDParam) else {
+            throw Abort(.badRequest, reason: "Invalid circle ID")
+        }
+        guard let circle = try await Circle.find(circleUUID, on: req.db) else {
+            throw Abort(.notFound, reason: "Circle does not exist")
+        }
+        if try await circleExists(circle, on: req.db) {
+            try await circle.delete(on: req.db)
+        } else {
+            throw Abort(.notFound, reason: "Circle does not exist")
+        }
+        return Response(status: .ok, body: .init(stringLiteral: "Circle was removed from database"))
+    }
     
     func circleExists(_ circle: Circle, on db: any Database) async throws -> Bool {
         return try await Circle.find(circle.id, on: db) != nil

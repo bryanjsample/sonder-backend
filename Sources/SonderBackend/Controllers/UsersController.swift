@@ -60,6 +60,7 @@ struct UsersController: RouteCollection {
             }
         }
         let userIDParam = try req.parameters.require("userID")
+        // let userID = sanitizeandvalidate(userID)
         guard let userUUID = UUID(uuidString: userIDParam) else {
             throw Abort(.badRequest, reason: "Invalid user ID")
         }
@@ -82,10 +83,14 @@ struct UsersController: RouteCollection {
     }
     
     func remove(req: Request) async throws -> Response {
-        let dto = try req.content.decode(UserDTO.self)
-        let sanitizedDTO = try validateAndSanitize(dto)
-        let user = sanitizedDTO.toModel()
-        
+        let userIDParam = try req.parameters.require("userID")
+        // let userID = sanitizeandvalidate(userID)
+        guard let userUUID = UUID(uuidString: userIDParam) else {
+            throw Abort(.notFound, reason: "Invalid user ID")
+        }
+        guard let user = try await User.find(userUUID, on: req.db) else {
+            throw Abort(.notFound, reason: "Circle does not exist")
+        }
         if try await userExists(user, on: req.db) {
             try await user.delete(on: req.db)
         } else {
@@ -107,14 +112,14 @@ struct UsersController: RouteCollection {
          }
          */
     
+    func userExists(_ user: User, on db: any Database) async throws -> Bool {
+        return try await User.find(user.id, on: db) != nil
+    }
+    
     func validateAndSanitize(_ userDTO: UserDTO) throws -> UserDTO {
         try InputValidator.validateUser(userDTO)
         let sanitizedDTO = InputSanitizer.sanitizeUser(userDTO)
         return sanitizedDTO
-    }
-    
-    func userExists(_ user: User, on db: any Database) async throws -> Bool {
-        return try await User.find(user.id, on: db) != nil
     }
     
 }
