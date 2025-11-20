@@ -9,6 +9,9 @@ import Vapor
 import Fluent
 
 struct CirclesController: RouteCollection {
+    
+    let helper = ControllerHelper()
+    
     func boot(routes: any RoutesBuilder) throws {
         let circles = routes.grouped("circles")
 
@@ -29,18 +32,6 @@ struct CirclesController: RouteCollection {
         }
     }
     
-    func getCircle(req: Request) async throws -> Circle {
-        let circleIDParam = try req.parameters.require("circleID")
-        // let circleID = sanitize and validate(param)
-        guard let circleUUID = UUID(uuidString: circleIDParam) else {
-            throw Abort(.badRequest, reason: "Invalid circle ID")
-        }
-        guard let circle = try await Circle.find(circleUUID, on: req.db) else {
-            throw Abort(.notFound, reason: "Circle does not exist")
-        }
-        return circle
-    }
-    
     func createCircle(req: Request) async throws -> Response {
         let dto = try req.content.decode(CircleDTO.self)
         let sanitizedDTO = try validateAndSanitize(dto)
@@ -56,7 +47,7 @@ struct CirclesController: RouteCollection {
     }
     
     func retrieve(req: Request) async throws -> CircleDTO {
-        let circle = try await getCircle(req: req)
+        let circle = try await helper.getCircle(req: req)
         return CircleDTO(from: circle)
     }
     
@@ -68,7 +59,7 @@ struct CirclesController: RouteCollection {
                 circle.pictureUrl = picureUrl
             }
         }
-        let circle = try await getCircle(req: req)
+        let circle = try await helper.getCircle(req: req)
         
         let dto = try req.content.decode(CircleDTO.self)
         let sanitizedDTO = try validateAndSanitize(dto)
@@ -81,20 +72,20 @@ struct CirclesController: RouteCollection {
     }
     
     func remove(req: Request) async throws -> Response {
-        let circle = try await getCircle(req: req)
+        let circle = try await helper.getCircle(req: req)
         try await circle.delete(on: req.db)
         return Response(status: .ok, body: .init(stringLiteral: "Circle was removed from database"))
     }
     
     func retrieveUsers(req: Request) async throws  -> [UserDTO] {
-        let circle = try await getCircle(req: req)
+        let circle = try await helper.getCircle(req: req)
         
         return try await circle.$users.query(on: req.db).all()
             .map { UserDTO(from: $0) }
     }
     
     func retrieveFeed(req: Request) async throws -> FeedResponseDTO {
-        let circle = try await getCircle(req: req)
+        let circle = try await helper.getCircle(req: req)
 
 //        // Optional: parse pagination cursor or page/limit
 //        let limit = min((try? req.query.get(Int.self, at: "limit")) ?? 25, 100)

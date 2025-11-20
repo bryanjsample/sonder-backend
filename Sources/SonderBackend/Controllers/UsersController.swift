@@ -9,6 +9,9 @@ import Vapor
 import Fluent
 
 struct UsersController: RouteCollection {
+    
+    let helper = ControllerHelper()
+    
     func boot(routes: any RoutesBuilder) throws {
         let users = routes.grouped("users")
         
@@ -21,17 +24,6 @@ struct UsersController: RouteCollection {
         }
     }
     
-    func getUser(req: Request) async throws -> User {
-        let userIDParam = try req.parameters.require("userID")
-        // let userID = sanitizeAndValidate(param)
-        guard let userUUID = UUID(uuidString: userIDParam) else {
-            throw Abort(.badRequest, reason: "Invalid user ID")
-        }
-        guard let user = try await User.find(userUUID, on: req.db) else {
-            throw Abort(.notFound, reason: "User does not exist")
-        }
-        return user
-    }
     
     func createUser(req: Request) async throws -> UserDTO {
         let dto = try req.content.decode(UserDTO.self)
@@ -47,7 +39,7 @@ struct UsersController: RouteCollection {
     }
     
     func retrieve(req: Request) async throws -> UserDTO {
-        let user = try await getUser(req: req)
+        let user = try await helper.getUser(req: req)
         return UserDTO(from: user)
     }
     
@@ -63,7 +55,7 @@ struct UsersController: RouteCollection {
                 user.pictureUrl = pictureUrl
             }
         }
-        let user = try await getUser(req: req)
+        let user = try await helper.getUser(req: req)
         
         let dto = try req.content.decode(UserDTO.self)
         let sanitizedDTO = try validateAndSanitize(dto)
@@ -76,7 +68,7 @@ struct UsersController: RouteCollection {
     }
     
     func remove(req: Request) async throws -> Response {
-        let user = try await getUser(req: req)
+        let user = try await helper.getUser(req: req)
         try await user.delete(on: req.db)
         return Response(status: .ok, body: .init(stringLiteral: "User was removed from database"))
     }
