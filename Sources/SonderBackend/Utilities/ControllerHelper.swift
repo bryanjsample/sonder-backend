@@ -57,4 +57,15 @@ struct ControllerHelper {
         }
         return calendarEvent
     }
+    
+    func getComment(req: Request) async throws -> Comment {
+        let commentIDParam = try req.parameters.require("commentID")
+        guard let commentUUID = UUID(uuidString: commentIDParam) else {
+            throw Abort(.badRequest, reason: "invalid comment ID")
+        }
+        guard let comment = try await Comment.find(commentUUID, on: req.db) else {
+            throw Abort(.notFound, reason: "Comment does not exist")
+        }
+        return comment
+    }
 }

@@ -33,7 +33,7 @@ extension PostDTO {
         self.circle = post.circle
         self.author = post.author
         self.content = post.content
-        self.createdAt = post.createdAt
+        self.createdAt = post.createdAt ?? nil
     }
     
 }

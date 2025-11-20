@@ -48,6 +48,12 @@ enum InputValidator {
         }
     }
     
+    static func validateComment(_ comment: CommentDTO) throws {
+        try validatePost(PostDTO(from: comment.post))
+        try validateUser(UserDTO(from: comment.author))
+        try validateString(data: comment.content, inputField: InputField.textBlock)
+    }
+    
     static func validateString(data: String, inputField: InputField) throws {
         func usesOauthHost() throws -> Bool {
             let oauthHosts = ["googleusercontent.com", "ggpht.com", "lh3.googleusercontent.com"]

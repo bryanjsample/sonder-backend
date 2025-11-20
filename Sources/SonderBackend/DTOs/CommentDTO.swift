@@ -24,3 +24,14 @@ struct CommentDTO: Content {
         return model
     }
 }
+
+extension CommentDTO {
+    
+    init(from comment: Comment) {
+        self.id = comment.id ?? nil
+        self.post = comment.post
+        self.author = comment.author
+        self.content = comment.content
+        self.createdAt = comment.createdAt ?? nil
+    }
+}

@@ -53,6 +53,15 @@ enum InputSanitizer {
         return CalendarEventDTO(id: id, host: host, circle: circle, title: title, description: description, startTime: startTime, endTime: endTime, createdAt: createdAt)
     }
     
+    static func sanitizeComment(_ comment: CommentDTO) -> CommentDTO {
+        let id = comment.id ?? nil
+        let post = sanitizePost(PostDTO(from: comment.post)).toModel()
+        let author = sanitizeUser(UserDTO(from: comment.author)).toModel()
+        let content = sanitizeTextBlock(comment.content)
+        let createdAt = comment.createdAt ?? nil
+        return CommentDTO(id: id, post: post, author: author, content: content, createdAt: createdAt)
+    }
+    
     static func sanitizeName(_ name: String) -> String {
         let trimmedName = name.trimmingCharacters(in: .newlines)
         let components = trimmedName.split(separator: " ")
