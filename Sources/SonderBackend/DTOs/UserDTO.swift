@@ -20,16 +20,12 @@ struct UserDTO: Content {
     func toModel() -> User {
         let model = User()
         
-        print("dto = \(self)")
-        
         model.id = self.id ?? nil
         model.email = self.email
         model.firstName = self.firstName
         model.lastName = self.lastName
         model.username = self.username ?? nil
         model.pictureUrl = self.pictureUrl ?? nil
-        
-        print("model = \(model)")
         
         return model
     }

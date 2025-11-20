@@ -41,7 +41,6 @@ enum InputValidator {
             guard let components = URLComponents(string: trimmed) else {
                 throw ValidationError("URL does not have valid components")
             }
-            print(components.host ?? "\n\nhost is missing")
             return oauthHosts.contains(components.host ?? "")
         }
         
@@ -52,16 +51,13 @@ enum InputValidator {
             
             let range = NSRange(location: 0, length: trimmed.utf16.count)
             guard regex.firstMatch(in: trimmed, range: range) != nil else {
-                print("\(data) is not a valid \(inputField.description)")
                 throw ValidationError("Invalid \(inputField.description) type")
             }
-            print("\(data) is a valid \(inputField.description)")
         }
         
         let trimmed = data.trimmingCharacters(in: .whitespacesAndNewlines)
         
         guard !trimmed.isEmpty else {
-            print("\(data) is an empty \(inputField.description)")
             throw ValidationError("\(inputField.description) cannot be empty")
         }
         
@@ -70,7 +66,6 @@ enum InputValidator {
             if try usesOauthHost() {
                 let oauthPattern = #"^https?:\/\/[A-Za-z0-9]+(?:\.[A-Za-z0-9]+)*+(?:\/[^\s?#<>%]*)?(?:\?[^\s#<>%]*)?(?:#[^\s<>%]*)?$"#
                 try validateRegex(newPattern: oauthPattern)
-                print("\(data) uses an OAuth host for it's \(inputField.description)")
             } else {
                 try validateRegex()
             }

@@ -80,7 +80,6 @@ struct UserTests {
             for user in userDTOs {
                 try await app.testing().test(.POST, "users", beforeRequest: { req in
                     try req.content.encode(user)
-                    print("\n\n\(req.content)")
                 }, afterResponse: {res in
                     #expect(res.status == .created)
                 })
@@ -96,8 +95,6 @@ struct UserTests {
                 try await user.save(on: app.db)
                 let userID = user.id?.uuidString ?? "id_missing"
                 try await app.testing().test(.GET, "users/\(userID)", afterResponse: {res in
-//                    print("\n\n\(try res.content.decode(UserDTO.self))")
-                    print("\n\n \(res.content)")
                     #expect(res.status == .ok)
                 })
             }
@@ -110,13 +107,10 @@ struct UserTests {
             for user in users {
                 try await user.save(on: app.db)
                 let userID = user.id?.uuidString ?? "id_missing"
-                print("userID = \(userID)")
                 var dto = UserDTO(from: user)
-                print(dto)
                 dto.lastName = "PATCHED"
                 try await app.testing().test(.PATCH, "users/\(userID)", beforeRequest: { req in
                     try req.content.encode(dto)
-                    print("\n\n\(req.content)")
                 }, afterResponse: { res in
                     #expect(res.status == .ok)
                 })
@@ -133,7 +127,6 @@ struct UserTests {
                 let dto = UserDTO(from: user)
                 try await app.testing().test(.DELETE, "users/\(userID)", beforeRequest: { req in
                     try req.content.encode(dto)
-                    print("\n\n\(req.content)")
                 }, afterResponse: { res in
                     #expect(res.status == .ok)
                 })

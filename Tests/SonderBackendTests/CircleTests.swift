@@ -50,9 +50,7 @@ struct CircleTests {
         try await withApp { app in
             for dto in circleDTOs {
                 try await app.testing().test(.POST, "circles", beforeRequest: { req in
-                    try req.content.encode(dto)
-                    print("\n\n\(req.content)")
-                }, afterResponse: { res in
+                    try req.content.encode(dto)                }, afterResponse: { res in
                     #expect(res.status == .created)
                 })
             }
@@ -66,7 +64,6 @@ struct CircleTests {
                 try await circle.save(on: app.db)
                 let circleID = circle.id?.uuidString ?? "id_missing"
                 try await app.testing().test(.GET, "circles/\(circleID)", afterResponse: { res in
-                    print("\n\n \(res.content)")
                     #expect(res.status == .ok)
                 })
             }
@@ -83,7 +80,6 @@ struct CircleTests {
                 dto.description = "PATCHED DESCRIPTION"
                 try await app.testing().test(.PATCH, "circles/\(circleID)", beforeRequest: { req in
                     try req.content.encode(dto)
-                    print("\n\n\(req.content)")
                 }, afterResponse: { res in
                     #expect(res.status == .ok)
                 })
@@ -100,7 +96,6 @@ struct CircleTests {
                 let dto = CircleDTO(from: circle)
                 try await app.testing().test(.DELETE, "circles/\(circleID)", beforeRequest: { req in
                     try req.content.encode(dto)
-                    print("\n\n\(req.content)")
                 }, afterResponse: { res in
                     #expect(res.status == .ok)
                 })

@@ -113,9 +113,9 @@ enum InputField: Hashable, CustomStringConvertible {
             */
             return #"^https?:\/\/[A-Za-z0-9]+(?:\.[A-Za-z0-9]+)*+(?:\/[^\s?#<>%]+)*\.(?:jpg|jpeg|png|gif|webp|bmp|svg)(?:\?[^\s#<>%]*)?(?:#[^\s<>%]*)?$"#
         case .circleName:
-            return #"^[^@#$%<>;{}\\]{2,30}$"#
+            return #"^[^\t\n\r@#$%<>;{}\\]{2,30}$"#
         case .circleDescription:
-            return #"^[^@#$%<>;{}\\]{2,150}$"#
+            return #"^[^\t\n\r@#$%<>;{}\\]{2,150}$"#
 
         }
     }
