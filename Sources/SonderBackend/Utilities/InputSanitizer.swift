@@ -25,11 +25,20 @@ enum InputSanitizer {
         var sanitizedDTO = CircleDTO()
         sanitizedDTO.id = circle.id ?? nil
         sanitizedDTO.name = sanitizeCircleName(circle.name)
-        sanitizedDTO.description = sanitizeDescription(circle.description)
+        sanitizedDTO.description = sanitizeTextBlock(circle.description)
         if let pictureUrl = circle.pictureUrl {
             sanitizedDTO.pictureUrl = sanitizePictureUrl(pictureUrl)
         }
         return sanitizedDTO
+    }
+    
+    static func sanitizePost(_ post: PostDTO) -> PostDTO {
+        let id = post.id ?? nil
+        let circle = sanitizeCircle(CircleDTO(from: post.circle)).toModel()
+        let author = sanitizeUser(UserDTO(from: post.author)).toModel()
+        let content = sanitizeTextBlock(post.content)
+        let createdAt = post.createdAt ?? nil
+        return PostDTO(id: id, circle: circle, author: author, content: content, createdAt: createdAt)
     }
     
     static func sanitizeName(_ name: String) -> String {
@@ -63,8 +72,8 @@ enum InputSanitizer {
             .trimmingCharacters(in: .whitespacesAndNewlines)
     }
     
-    static func sanitizeDescription(_ description: String) -> String {
-        description
+    static func sanitizeTextBlock(_ textBlock: String) -> String {
+        textBlock
             .trimmingCharacters(in: .whitespacesAndNewlines)
     }
     

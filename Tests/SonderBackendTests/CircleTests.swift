@@ -102,5 +102,10 @@ struct CircleTests {
             }
         }
     }
+    
+    @Test("Test /circles/:circleID/users")
+    func retrieveUsers() async throws {
+        
+    }
 }
 

@@ -5,7 +5,6 @@
 //  Created by Bryan Sample on 11/14/25.
 //
 
-import Fluent
 import Vapor
 
 struct PostDTO: Content {
@@ -14,6 +13,7 @@ struct PostDTO: Content {
     var circle: Circle
     var author: User
     var content: String
+    var createdAt: Date?
     
     func toModel() -> Post {
         let model = Post()
@@ -21,6 +21,19 @@ struct PostDTO: Content {
         model.circle = self.circle
         model.author = self.author
         model.content = self.content
+        model.createdAt = self.createdAt
         return model
     }
+}
+
+extension PostDTO {
+
+    init(from post: Post) {
+        self.id = post.id ?? nil
+        self.circle = post.circle
+        self.author = post.author
+        self.content = post.content
+        self.createdAt = post.createdAt
+    }
+    
 }

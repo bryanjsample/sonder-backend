@@ -19,6 +19,26 @@ struct CirclesController: RouteCollection {
             circle.patch(use: edit)
             circle.delete(use: remove)
         }
+        
+        circles.group(":circleID","users") { circleUsers in
+            circleUsers.get(use: retrieveUsers)
+        }
+        
+        circles.group(":circleID","feed") { circleFeed in
+            circleFeed.get(use: retrieveFeed)
+        }
+    }
+    
+    func getCircle(req: Request) async throws -> Circle {
+        let circleIDParam = try req.parameters.require("circleID")
+        // let circleID = sanitize and validate(param)
+        guard let circleUUID = UUID(uuidString: circleIDParam) else {
+            throw Abort(.badRequest, reason: "Invalid circle ID")
+        }
+        guard let circle = try await Circle.find(circleUUID, on: req.db) else {
+            throw Abort(.notFound, reason: "Circle does not exist")
+        }
+        return circle
     }
     
     func createCircle(req: Request) async throws -> Response {
@@ -35,20 +55,12 @@ struct CirclesController: RouteCollection {
         }
     }
     
-    func retrieve(req: Request) async throws -> Response {
-        let circleIDParam = try req.parameters.require("circleID")
-        // let circleID = sanitizeandvalidate(circleIDParam)
-        guard let circleUUID = UUID(uuidString: circleIDParam) else {
-            throw Abort(.notFound, reason: "Invalid circle ID")
-        }
-        guard let circle = try await Circle.find(circleUUID, on: req.db) else {
-            throw Abort(.notFound, reason: "Circle does not exist")
-        }
-        let dto = CircleDTO(from: circle)
-        return Response(status: .ok, body: .init(data: try JSONEncoder().encode(dto)))
+    func retrieve(req: Request) async throws -> CircleDTO {
+        let circle = try await getCircle(req: req)
+        return CircleDTO(from: circle)
     }
     
-    func edit(req: Request) async throws -> Response {
+    func edit(req: Request) async throws -> CircleDTO {
         func transferFields(_ dto: CircleDTO, _ circle: Circle) {
             circle.name = dto.name
             circle.description = dto.description
@@ -56,44 +68,59 @@ struct CirclesController: RouteCollection {
                 circle.pictureUrl = picureUrl
             }
         }
-        let circleIDParam = try req.parameters.require("circleID")
-        // let circleID = sanititzeandvalidate(param)
-        guard let circleUUID = UUID(uuidString: circleIDParam) else {
-            throw Abort(.badRequest, reason: "Invalid circle ID")
-        }
-        guard let circle = try await Circle.find(circleUUID, on: req.db) else {
-            throw Abort(.notFound, reason: "Circle does not exist")
-        }
+        let circle = try await getCircle(req: req)
+        
         let dto = try req.content.decode(CircleDTO.self)
         let sanitizedDTO = try validateAndSanitize(dto)
         
         transferFields(sanitizedDTO, circle)
-        
-        if try await circleExists(circle, on: req.db) {
-            try await circle.update(on: req.db)
-        } else {
-            throw Abort(.notFound, reason: "Circle does not exist")
-        }
-        
-        let responseDTO = CircleDTO(from: circle)
-        return Response(status: .ok, body: .init(data: try JSONEncoder().encode(responseDTO)))
+
+        try await circle.update(on: req.db)
+
+        return CircleDTO(from: circle)
     }
     
     func remove(req: Request) async throws -> Response {
-        let circleIDParam = try req.parameters.require("circleID")
-        // let circleID = sanititzeandvalidate(param)
-        guard let circleUUID = UUID(uuidString: circleIDParam) else {
-            throw Abort(.badRequest, reason: "Invalid circle ID")
-        }
-        guard let circle = try await Circle.find(circleUUID, on: req.db) else {
-            throw Abort(.notFound, reason: "Circle does not exist")
-        }
-        if try await circleExists(circle, on: req.db) {
-            try await circle.delete(on: req.db)
-        } else {
-            throw Abort(.notFound, reason: "Circle does not exist")
-        }
+        let circle = try await getCircle(req: req)
+        try await circle.delete(on: req.db)
         return Response(status: .ok, body: .init(stringLiteral: "Circle was removed from database"))
+    }
+    
+    func retrieveUsers(req: Request) async throws  -> [UserDTO] {
+        let circle = try await getCircle(req: req)
+        
+        return try await circle.$users.query(on: req.db).all()
+            .map { UserDTO(from: $0) }
+    }
+    
+    func retrieveFeed(req: Request) async throws -> FeedResponseDTO {
+        let circle = try await getCircle(req: req)
+
+//        // Optional: parse pagination cursor or page/limit
+//        let limit = min((try? req.query.get(Int.self, at: "limit")) ?? 25, 100)
+//        let cursor = try? req.query.get(String.self, at: "cursor") // your own cursor strategy
+
+        async let posts = circle.$posts.query(on: req.db)
+            .sort(\.$createdAt, .descending)
+//            .limit(limit)
+            .all()
+
+        async let events = circle.$events.query(on: req.db)
+            .sort(\.$createdAt, .descending)
+//            .limit(limit)
+            .all()
+
+        let postDTOs = try await posts.map { FeedItemDTO.post(PostDTO(from: $0)) }
+        let eventDTOs = try await events.map { FeedItemDTO.event(CalendarEventDTO(from: $0)) }
+
+        // Merge and sort by createdAt descending
+        let merged = (postDTOs + eventDTOs).sorted { $0.createdAt! > $1.createdAt! }
+
+//        // Apply pagination strategy (e.g., take first N, derive nextCursor)
+//        let items = Array(merged.prefix(limit))
+//        let nextCursor: String? = nil // implement cursor generation as needed
+
+        return FeedResponseDTO(items: merged)
     }
     
     func circleExists(_ circle: Circle, on db: any Database) async throws -> Bool {

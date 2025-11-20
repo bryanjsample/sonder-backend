@@ -21,7 +21,19 @@ struct UsersController: RouteCollection {
         }
     }
     
-    func createUser(req: Request) async throws -> Response {
+    func getUser(req: Request) async throws -> User {
+        let userIDParam = try req.parameters.require("userID")
+        // let userID = sanitizeAndValidate(param)
+        guard let userUUID = UUID(uuidString: userIDParam) else {
+            throw Abort(.badRequest, reason: "Invalid user ID")
+        }
+        guard let user = try await User.find(userUUID, on: req.db) else {
+            throw Abort(.notFound, reason: "User does not exist")
+        }
+        return user
+    }
+    
+    func createUser(req: Request) async throws -> UserDTO {
         let dto = try req.content.decode(UserDTO.self)
         let sanitizedDTO = try validateAndSanitize(dto)
         let user = sanitizedDTO.toModel()
@@ -30,24 +42,16 @@ struct UsersController: RouteCollection {
             throw Abort(.badRequest, reason: "User already exists")
         } else {
             try await user.save(on: req.db)
-            let dto = UserDTO(from: user)
-            return Response(status: .created, body: .init(data: try JSONEncoder().encode(dto)))
+            return UserDTO(from: user)
         }
     }
     
-    func retrieve(req: Request) async throws -> Response {
-        let userIDParam = try req.parameters.require("userID")
-        guard let userUUID = UUID(uuidString: userIDParam) else {
-            throw Abort(.badRequest, reason: "Invalid user ID")
-        }
-        guard let user = try await User.find(userUUID, on: req.db) else {
-            throw Abort(.notFound, reason: "User does not exist")
-        }
-        let dto = UserDTO(from: user)
-        return Response(status: .ok, body: .init(data: try JSONEncoder().encode(dto)))
+    func retrieve(req: Request) async throws -> UserDTO {
+        let user = try await getUser(req: req)
+        return UserDTO(from: user)
     }
     
-    func edit(req: Request) async throws ->  Response {
+    func edit(req: Request) async throws ->  UserDTO {
         func transferFields(_ dto: UserDTO, _ user: User, ) {
             user.email = dto.email
             user.firstName = dto.firstName
@@ -59,43 +63,21 @@ struct UsersController: RouteCollection {
                 user.pictureUrl = pictureUrl
             }
         }
-        let userIDParam = try req.parameters.require("userID")
-        // let userID = sanitizeandvalidate(userID)
-        guard let userUUID = UUID(uuidString: userIDParam) else {
-            throw Abort(.badRequest, reason: "Invalid user ID")
-        }
-        guard let user = try await User.find(userUUID, on: req.db) else {
-            throw Abort(.notFound, reason: "User does not exist")
-        }
+        let user = try await getUser(req: req)
+        
         let dto = try req.content.decode(UserDTO.self)
         let sanitizedDTO = try validateAndSanitize(dto)
         
         transferFields(sanitizedDTO, user)
         
-        if try await userExists(user, on: req.db) {
-            try await user.update(on: req.db)
-        } else {
-            throw Abort(.notFound, reason: "User does not exist")
-        }
+        try await user.update(on: req.db)
         
-        let responseDTO = UserDTO(from: user)
-        return Response(status: .ok, body: .init(data: try JSONEncoder().encode(responseDTO)))
+        return UserDTO(from: user)
     }
     
     func remove(req: Request) async throws -> Response {
-        let userIDParam = try req.parameters.require("userID")
-        // let userID = sanitizeandvalidate(userID)
-        guard let userUUID = UUID(uuidString: userIDParam) else {
-            throw Abort(.notFound, reason: "Invalid user ID")
-        }
-        guard let user = try await User.find(userUUID, on: req.db) else {
-            throw Abort(.notFound, reason: "Circle does not exist")
-        }
-        if try await userExists(user, on: req.db) {
-            try await user.delete(on: req.db)
-        } else {
-            throw Abort(.notFound, reason: "User does not exist")
-        }
+        let user = try await getUser(req: req)
+        try await user.delete(on: req.db)
         return Response(status: .ok, body: .init(stringLiteral: "User was removed from database"))
     }
     

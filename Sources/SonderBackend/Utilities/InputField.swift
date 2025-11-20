@@ -6,7 +6,7 @@
 //
 
 enum InputField: Hashable, CustomStringConvertible {
-    case email, name, username, pictureUrl, circleName, circleDescription
+    case email, name, username, pictureUrl, circleName, circleDescription, postContent
     
     var description: String {
         switch self {
@@ -22,6 +22,8 @@ enum InputField: Hashable, CustomStringConvertible {
             return "circleName"
         case .circleDescription:
             return "circleDescription"
+        case .postContent:
+            return "postContent"
         }
     }
     
@@ -115,7 +117,9 @@ enum InputField: Hashable, CustomStringConvertible {
         case .circleName:
             return #"^[^\t\n\r@#$%<>;{}\\]{2,30}$"#
         case .circleDescription:
-            return #"^[^\t\n\r@#$%<>;{}\\]{2,150}$"#
+            return #"^[^@#$%<>;{}\\]{2,150}$"#
+        case .postContent:
+            return #"^(?s)[^\u0000-\u0008\u000B\u000C\u000E-\u001F@#$%<>;{}\\]{1,1000}$"#
 
         }
     }

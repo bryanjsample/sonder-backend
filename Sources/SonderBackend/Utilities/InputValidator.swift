@@ -35,6 +35,14 @@ enum InputValidator {
         }
     }
     
+    static func validatePost(_ post: PostDTO) throws {
+        try validateCircle(CircleDTO(from: post.circle))
+        
+        try validateUser(UserDTO(from: post.author))
+        
+        try validateString(data: post.content, inputField: InputField.postContent)
+    }
+    
     static func validateString(data: String, inputField: InputField) throws {
         func usesOauthHost() throws -> Bool {
             let oauthHosts = ["googleusercontent.com", "ggpht.com", "lh3.googleusercontent.com"]
