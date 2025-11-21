@@ -48,23 +48,21 @@ final class CalendarEvent: Model, @unchecked Sendable {
     
     init(
         id: UUID? = nil,
-        hostID: User.IDValue,
-        circleID: Circle.IDValue,
+        host: User,
+        circle: Circle,
         title: String,
         description: String,
         startTime: Date,
         endTime: Date,
-        createdAt: Date? = nil,
-        lastModified: Date? = nil,
-    ) {
+        createdAt: Date? = nil
+    ) throws {
         self.id = id
-        self.$host.id = hostID
-        self.$circle.id = circleID
+        self.$host.id = try host.requireID()
+        self.$circle.id = try circle.requireID()
         self.title = title
         self.description = description
         self.startTime = startTime
         self.endTime = endTime
         self.createdAt = createdAt
-        self.lastModified = lastModified
     }
 }

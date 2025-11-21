@@ -5,30 +5,35 @@
 //  Created by Bryan Sample on 11/14/25.
 //
 
-import Fluent
 import Vapor
 
 struct PostDTO: Content {
     
     var id: UUID?
-    var circle: Circle
-    var author: User
+    var circleID: UUID
+    var authorID: UUID
     var content: String
     var createdAt: Date?
-    var lastModified: Date?
     
     func toModel() -> Post {
         let model = Post()
         model.id = self.id
-        model.circle = self.circle
-        model.author = self.author
+        model.$circle.id = self.circleID
+        model.$author.id = self.authorID
         model.content = self.content
-        if let createdAt = self.createdAt {
-            model.createdAt = createdAt
-        }
-        if let lastModified = self.lastModified {
-            model.lastModified = lastModified
-        }
+        model.createdAt = self.createdAt
         return model
     }
+}
+
+extension PostDTO {
+
+    init(from post: Post) {
+        self.id = post.id ?? nil
+        self.circleID = post.$circle.id
+        self.authorID = post.$author.id
+        self.content = post.content
+        self.createdAt = post.createdAt ?? nil
+    }
+    
 }

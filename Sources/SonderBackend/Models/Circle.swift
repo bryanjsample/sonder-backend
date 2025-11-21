@@ -13,6 +13,21 @@ final class Circle: Model, @unchecked Sendable {
     
     @ID(key: .id)
     var id: UUID?
+
+    @Field(key: "name")
+    var name: String
+    
+    @Field(key: "description")
+    var description: String
+    
+    @Field(key: "picture_url")
+    var pictureUrl: String?
+    
+    @Timestamp(key: "created_at", on: .create)
+    var createdAt: Date?
+    
+    @Timestamp(key: "last_modified", on: .update)
+    var lastModified: Date?
     
     @Children(for: \.$circle)
     var users: [User]
@@ -22,21 +37,6 @@ final class Circle: Model, @unchecked Sendable {
     
     @Children(for: \.$circle)
     var posts: [Post]
-
-    @Field(key: "name")
-    var name: String
-    
-    @Field(key: "description")
-    var description: String
-    
-    @Timestamp(key: "created_at", on: .create)
-    var createdAt: Date?
-    
-    @Timestamp(key: "last_modified", on: .update)
-    var lastModified: Date?
-    
-//    @Field(key: "picture")     how to store picture data
-//    var picture: Data
     
     init() { }
     
@@ -44,13 +44,11 @@ final class Circle: Model, @unchecked Sendable {
         id: UUID? = nil,
         name: String,
         description: String,
-        createdAt: Date? = nil,
-        lastModified: Date? = nil,
+        pictureUrl: String? = nil,
     ) {
         self.id = id
         self.name = name
         self.description = description
-        self.createdAt = createdAt
-        self.lastModified = lastModified
+        self.pictureUrl = pictureUrl
     }
 }

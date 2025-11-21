@@ -14,8 +14,8 @@ final class User: Model, @unchecked Sendable {
     @ID(key: .id)
     var id: UUID?
     
-    @Parent(key: "circle_id")
-    var circle: Circle
+    @OptionalParent(key: "circle_id")
+    var circle: Circle?
     
     @Children(for: \.$author)
     var posts: [Post]
@@ -26,6 +26,9 @@ final class User: Model, @unchecked Sendable {
     @Children(for: \.$host)
     var events: [CalendarEvent]
     
+    @Field(key: "email")
+    var email: String
+    
     @Field(key: "first_name")
     var firstName: String
     
@@ -33,11 +36,10 @@ final class User: Model, @unchecked Sendable {
     var lastName: String
     
     @Field(key: "username")
-    var username: String
+    var username: String?
     
-    
-//    @Field(key: "picture")
-//    var picture: Data
+    @Field(key: "picture_url")
+    var pictureUrl: String?
     
     @Timestamp(key: "created_at", on: .create)
     var createdAt: Date?
@@ -49,20 +51,20 @@ final class User: Model, @unchecked Sendable {
     
     init(
         id: UUID? = nil,
-        circleID: Circle.IDValue,
+        circle: Circle? = nil,
+        email: String,
         firstName: String,
         lastName: String,
-        username: String,
-        createdAt: Date? = nil,
-        lastModified: Date? = nil
-    ) {
+        username: String? = nil,
+        pictureUrl: String? = nil,
+    ) throws {
         self.id = id
-        self.$circle.id = circleID
+        self.$circle.id = try circle?.requireID()
+        self.email = email
         self.firstName = firstName
         self.lastName = lastName
         self.username = username
-        self.createdAt = createdAt
-        self.lastModified = lastModified
+        self.pictureUrl = pictureUrl
     }
     
 }

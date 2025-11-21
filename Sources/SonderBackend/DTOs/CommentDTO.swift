@@ -5,29 +5,33 @@
 //  Created by Bryan Sample on 11/14/25.
 //
 
-import Fluent
 import Vapor
 
 struct CommentDTO: Content {
     
     var id: UUID?
-    var post: Post
-    var author: User
+    var postID: UUID
+    var authorID: UUID
     var content: String
     var createdAt: Date?
-    var lastModified: Date?
     
     func toModel() -> Comment {
         let model = Comment()
-        model.post = self.post
-        model.author = self.author
+        model.$post.id = self.postID
+        model.$author.id = self.authorID
         model.content = self.content
-        if let createdAt = self.createdAt {
-            model.createdAt = createdAt
-        }
-        if let lastModified = self.lastModified {
-            model.lastModified = lastModified
-        }
+        model.createdAt = self.createdAt
         return model
+    }
+}
+
+extension CommentDTO {
+    
+    init(from comment: Comment) {
+        self.id = comment.id ?? nil
+        self.postID = comment.$post.id
+        self.authorID = comment.$author.id
+        self.content = comment.content
+        self.createdAt = comment.createdAt ?? nil
     }
 }

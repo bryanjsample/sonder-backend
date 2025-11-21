@@ -35,21 +35,24 @@ final class Post: Model, @unchecked Sendable {
     @Timestamp(key: "last_modified", on: .update)
     var lastModified: Date?
     
+//    @Children(for: \.$post)
+//    var comments = [Comment]
+//    
+//    @Children(for: \.$post)
+    
     init() { }
     
     init(
         id: UUID? = nil,
-        circleID: Circle.IDValue,
-        authorID: User.IDValue,
+        circle: Circle,
+        author: User,
         content: String,
-        createdAt: Date? = nil,
-        lastModified: Date? = nil,
-    ) {
+        createdAt: Date? = nil
+    ) throws {
         self.id = id
-        self.$circle.id = circleID
-        self.$author.id = authorID
+        self.$circle.id = try circle.requireID()
+        self.$author.id = try author.requireID()
         self.content = content
         self.createdAt = createdAt
-        self.lastModified = lastModified
     }
 }

@@ -13,6 +13,7 @@ struct CreateCircle: AsyncMigration {
             .id()
             .field("name", .string, .required)
             .field("description", .string, .required)
+            .field("picture_url", .string)
             .field("created_at", .datetime)
             .field("last_modified", .datetime)
             .create()
