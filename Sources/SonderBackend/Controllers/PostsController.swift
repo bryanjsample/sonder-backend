@@ -23,7 +23,7 @@ struct PostsController: RouteCollection {
             post.delete(use: removePost)
         }
         
-        posts.group(":userID") { userPosts in
+        posts.group("user", ":userID") { userPosts in
             userPosts.post(use: createPost)
             userPosts.get(use: retrieveUserPosts)
         }
@@ -49,7 +49,7 @@ struct PostsController: RouteCollection {
     }
     
     func retrievePost(req: Request) async throws -> PostDTO {
-        let circle = try await helper.getCircle(req: req)
+        let _ = try await helper.getCircle(req: req)
         let post = try await helper.getPost(req: req)
         
         return PostDTO(from: post)
@@ -79,7 +79,7 @@ struct PostsController: RouteCollection {
         func transferFields(_ dto: PostDTO, _ post: Post) {
             post.content = dto.content
         }
-        let circle = try await helper.getCircle(req: req)
+        let _ = try await helper.getCircle(req: req)
         let post = try await helper.getPost(req: req)
         
         let dto = try req.content.decode(PostDTO.self)
@@ -95,7 +95,7 @@ struct PostsController: RouteCollection {
     }
     
     func removePost(req: Request) async throws -> Response {
-        let circle = try await helper.getCircle(req: req)
+        let _ = try await helper.getCircle(req: req)
         let post = try await helper.getPost(req: req)
         try await post.delete(on: req.db)
         return Response(status: .ok, body: .init(stringLiteral: "Post was removed from the database"))

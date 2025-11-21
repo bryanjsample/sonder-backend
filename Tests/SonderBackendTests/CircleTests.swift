@@ -103,9 +103,35 @@ struct CircleTests {
         }
     }
     
-    @Test("Test /circles/:circleID/users")
-    func retrieveUsers() async throws {
-        
+    @Test("Test /circles/:circleID/users GET")
+    func getCircleMembers() async throws {
+        try await withApp { app in
+            let circle = try await Circle.query(on: app.db)
+                .filter(\.$name == "TEST CIRCLE")
+                .first()
+            let circleID = circle?.id?.uuidString ?? "id_missing"
+            try await app.testing().test(.GET, "circles/\(circleID)/users", afterResponse: { res in
+                #expect(res.status == .ok)
+                let data = try res.content.decode([UserDTO].self)
+                print("\n\n\(data)\n\n")
+            })
+        }
     }
+    
+    @Test("Test /circles/:circleID/feed GET")
+    func getCircleFeed() async throws {
+        try await withApp { app in
+            let circle = try await Circle.query(on: app.db)
+                .filter(\.$name == "TEST CIRCLE")
+                .first()
+            let circleID = circle?.id?.uuidString ?? "id_missing"
+            try await app.testing().test(.GET, "circles/\(circleID)/feed", afterResponse: { res in
+                #expect(res.status == .ok)
+                let data = try res.content.decode(FeedResponseDTO.self)
+                print("\n\n\(data)\n\n")
+            })
+        }
+    }
+    
 }
 

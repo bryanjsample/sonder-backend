@@ -33,13 +33,13 @@ final class Comment: Model, @unchecked Sendable {
     
     init(
         id: UUID? = nil,
-        postID: Post.IDValue,
-        authorID: User.IDValue,
+        postID: Post,
+        authorID: User,
         content: String,
-    ) {
+    ) throws {
         self.id = id
-        self.$post.id = postID
-        self.$author.id = authorID
+        self.$post.id = try post.requireID()
+        self.$author.id = try author.requireID()
         self.content = content
     }
 }

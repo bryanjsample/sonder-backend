@@ -293,4 +293,179 @@ struct ValidationTests {
         }
         
     }
+
+    @Test("Test title validation on array of titles")
+    func validateTitles() async throws {
+        let validCircleNames = [
+            "CircleOne",
+            "The Great Circle",
+            "A2Z Community",
+            "Circle 123",
+            "MyCircleName1234567890123456", // 26 chars
+            "AB", // minimum length 2
+            "A Very Long Circle Name 30chars!!".prefix(30).description  // exactly 30 chars
+        ]
+        
+        let invalidCircleNames = [
+            "A",                     // too short (1 char)
+            "",                      // empty
+            "ThisCircleNameIsWayTooLongToBeValidBecauseItExceedsThirtyCharacters",
+            "!Circle@",               // forbidden characters ! @
+            "Circle#",                // forbidden character #
+            "Circle$",                // forbidden character $
+            "Circle%",                // forbidden character %
+            "Circle^",                // forbidden character ^
+            "Circle*",                // forbidden character *
+            "Circle+",                // forbidden character +
+            "Circle=",                // forbidden character =
+            "Circle{",                // forbidden character {
+            "Circle}",                // forbidden character }
+            "Circle\\",               // forbidden character \
+            "Circle~",                // forbidden character ~
+            "Circle`",                // forbidden character `
+            " ",                     // only space
+            "  ",                    // multiple spaces only
+            "\t",                    // tab character
+            "\n",                    // newline
+        ]
+        
+        let emptyCircleNames = [
+            "",
+            " ",
+            "\t",
+            "\n",
+            "     ",
+            "\n\n\n",
+            "\t\t\t",
+            " \n \t ",
+            "\r\n"
+        ]
+        
+        for circleName in validCircleNames {
+            #expect(throws: Never.self) {
+                try InputValidator.validateString(data: circleName, inputField: InputField.title)
+            }
+            
+        }
+        
+        for circleName in invalidCircleNames {
+            #expect(throws: ValidationError.self) {
+                try InputValidator.validateString(data: circleName, inputField: InputField.title)
+            }
+            print("\(circleName)")
+        }
+        
+        for circleName in emptyCircleNames {
+            #expect(throws: ValidationError.self) {
+                try InputValidator.validateString(data: circleName, inputField: InputField.title)
+            }
+            print("\(circleName)")
+        }
+    }
+    
+    @Test("Test description validation on array of descriptions")
+    func validateDescriptions() async throws {
+        let validDescriptions = [
+            "This is a simple description.",
+            "Another description with numbers 123 and symbols allowed - comma, period.",
+            String(repeating: "a", count: 2),       // minimum length 2
+            String(repeating: "a", count: 150),     // maximum length 150
+            "Circle description with emojis 😊🚀",
+            "Multi-line description\nWith newline",
+            "Description with - dashes and 'quotes', and periods.",
+            "Description that is exactly 150 characters long " + String(repeating: "a", count: 100),
+        ]
+        
+        let invalidDescriptions = [
+            "",                             // empty
+            "a",                            // too short (1 char)
+            String(repeating: "a", count: 151), // too long (151 chars)
+            "<script>alert('xss')</script>", // forbidden tags
+            "{some} description",           // forbidden characters {}
+            "Description with % percent",   // forbidden character %
+            "Description with ; semicolon", // forbidden character ;
+            "Description with \\ backslash",// forbidden character \
+            "Description with < and >",     // forbidden < and >
+            "\t",                          // only tab
+            "\n",                          // only newline
+            "  ",                          // only spaces
+            "   \n\t  ",                   // whitespace only
+        ]
+        
+        let emptyDescriptions = [
+            "",
+            " ",
+            "\t",
+            "\n",
+            "     ",
+            "\n\n\n",
+            "\t\t\t",
+            " \n \t ",
+            "\r\n"
+        ]
+        
+        for desc in validDescriptions {
+            #expect(throws: Never.self) {
+                try InputValidator.validateString(data: desc, inputField: InputField.description)
+            }
+        }
+        
+        for desc in invalidDescriptions {
+            #expect(throws: ValidationError.self) {
+                try InputValidator.validateString(data: desc, inputField: InputField.description)
+            }
+        }
+        
+        for desc in emptyDescriptions {
+            #expect(throws: ValidationError.self) {
+                try InputValidator.validateString(data: desc, inputField: InputField.description)
+            }
+        }
+    }
+    
+    
+    @Test("Test text block validation on array of text chunks")
+    func validateTextBlock() async throws {
+        let validPostContents = [
+            "Hello world! This is a simple post content.",
+            "Here's some multi-line content:\nLine two.\nLine three.",
+            "Emoji supported 🚀🔥😊",
+            "Content with punctuation, commas, periods... and more!",
+            "1234567890 numbers included",
+            "Mix of letters, numbers 123, and symbols like - ' \" ! ?",
+            String(repeating: "a", count: 1), // 1 character content
+            String(repeating: "a", count: 500), // long content (assuming no max length restriction here)
+            "Newlines\nTabs\tand spaces   ",
+            "Content with URL http://example.com",
+        ]
+        
+        let invalidPostContents = [
+            "",
+            " ",
+            "\n",
+            "\t",
+            "   ",
+            "\n\n",
+            "\t\t",
+            " \n \t ",
+            "<script>alert('XSS')</script>",
+            "Malicious {code} attempt",
+            "Bad character ; semicolon",
+            "Illegal % percent sign",
+            "Backslash \\ character",
+            "Content with <> angle brackets",
+        ]
+        
+        for content in validPostContents {
+            #expect(throws: Never.self) {
+                try InputValidator.validateString(data: content, inputField: InputField.textBlock)
+            }
+        }
+        
+        for content in invalidPostContents {
+            #expect(throws: ValidationError.self) {
+                try InputValidator.validateString(data: content, inputField: InputField.textBlock)
+            }
+        }
+    }
 }

@@ -16,6 +16,7 @@ public func configure(_ app: Application) async throws {
         database: Environment.get("DATABASE_NAME") ?? "sonder_testing",
         tls: .prefer(try .init(configuration: .clientDefault)))
     ), as: .psql)
+    
     if app.environment == .testing {
         app.logger.logLevel = .debug
     } else {
@@ -26,6 +27,9 @@ public func configure(_ app: Application) async throws {
     app.migrations.add(CreateCalendarEvent())
     app.migrations.add(CreatePost())
     app.migrations.add(CreateComment())
+    if app.environment == .testing {
+        app.migrations.add(MakeTestCircle())
+    }
 
     // register routes
     try routes(app)

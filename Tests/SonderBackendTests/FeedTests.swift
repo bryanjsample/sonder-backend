@@ -1,8 +1,8 @@
 //
-//  CalendarEventTests.swift
+//  FeedTests.swift
 //  SonderBackend
 //
-//  Created by Bryan Sample on 11/17/25.
+//  Created by Bryan Sample on 11/20/25.
 //
 
 @testable import SonderBackend
@@ -10,8 +10,8 @@ import VaporTesting
 import Testing
 import Fluent
 
-@Suite("Calendar Event Tests", .serialized)
-struct CalendarEventTests {
+@Suite("Feed Tests", .serialized)
+struct FeedTests {
     private func withApp(_ test: (Application) async throws -> ()) async throws {
         let app = try await Application.make(.testing)
         do {
@@ -26,4 +26,6 @@ struct CalendarEventTests {
         }
         try await app.asyncShutdown()
     }
+    
+    
 }

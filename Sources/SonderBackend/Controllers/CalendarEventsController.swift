@@ -23,7 +23,7 @@ struct CalendarEventsController: RouteCollection {
             event.delete(use: removeEvent)
         }
         
-        events.group(":userID") { userEvents in
+        events.group("user", ":userID") { userEvents in
             userEvents.post(use: createEvent)
             userEvents.get(use: retrieveUserEvents)
         }
@@ -49,7 +49,7 @@ struct CalendarEventsController: RouteCollection {
     }
     
     func retrieveEvent(req: Request) async throws -> CalendarEventDTO {
-        let circle = try await helper.getCircle(req: req)
+        let _ = try await helper.getCircle(req: req)
         let calendarEvent = try await helper.getCalendarEvent(req: req)
         
         return CalendarEventDTO(from: calendarEvent)
@@ -84,7 +84,7 @@ struct CalendarEventsController: RouteCollection {
             event.startTime = dto.startTime
             event.endTime = dto.endTime
         }
-        let circle = try await helper.getCircle(req: req)
+        let _ = try await helper.getCircle(req: req)
         let calendarEvent = try await helper.getCalendarEvent(req: req)
         
         let dto = try req.content.decode(CalendarEventDTO.self)
@@ -98,7 +98,7 @@ struct CalendarEventsController: RouteCollection {
     }
     
     func removeEvent(req: Request) async throws -> Response {
-        let circle = try await helper.getCircle(req: req)
+        let _ = try await helper.getCircle(req: req)
         let calendarEvent = try await helper.getCalendarEvent(req: req)
         try await calendarEvent.delete(on: req.db)
         return Response(status: .ok, body: .init(stringLiteral: "Event was removed from the database"))

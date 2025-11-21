@@ -51,15 +51,15 @@ final class User: Model, @unchecked Sendable {
     
     init(
         id: UUID? = nil,
-        circleID: Circle.IDValue? = nil,
+        circle: Circle? = nil,
         email: String,
         firstName: String,
         lastName: String,
         username: String? = nil,
         pictureUrl: String? = nil,
-    ) {
+    ) throws {
         self.id = id
-        self.$circle.id = circleID
+        self.$circle.id = try circle?.requireID()
         self.email = email
         self.firstName = firstName
         self.lastName = lastName

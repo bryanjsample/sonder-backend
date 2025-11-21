@@ -87,29 +87,23 @@ struct CirclesController: RouteCollection {
     func retrieveFeed(req: Request) async throws -> FeedResponseDTO {
         let circle = try await helper.getCircle(req: req)
 
-//        // Optional: parse pagination cursor or page/limit
-//        let limit = min((try? req.query.get(Int.self, at: "limit")) ?? 25, 100)
-//        let cursor = try? req.query.get(String.self, at: "cursor") // your own cursor strategy
-
-        async let posts = circle.$posts.query(on: req.db)
-            .sort(\.$createdAt, .descending)
-//            .limit(limit)
+        // ADD IN PAGINATION FUNCTIONALITY
+        
+        let posts = try await Post.query(on: req.db)
+            .filter(\.$circle.$id == circle.id!)
+            .with(\.$circle)
+            .with(\.$author)
+            .all()
+        
+        let events = try await CalendarEvent.query(on: req.db)
+            .filter(\.$circle.$id == circle.id!)
+            .with(\.$circle)
+            .with(\.$host)
             .all()
 
-        async let events = circle.$events.query(on: req.db)
-            .sort(\.$createdAt, .descending)
-//            .limit(limit)
-            .all()
-
-        let postDTOs = try await posts.map { FeedItemDTO.post(PostDTO(from: $0)) }
-        let eventDTOs = try await events.map { FeedItemDTO.event(CalendarEventDTO(from: $0)) }
-
-        // Merge and sort by createdAt descending
+        let postDTOs = posts.map { FeedItemDTO.post(PostDTO(from: $0)) }
+        let eventDTOs = events.map { FeedItemDTO.event(CalendarEventDTO(from: $0)) }
         let merged = (postDTOs + eventDTOs).sorted { $0.createdAt! > $1.createdAt! }
-
-//        // Apply pagination strategy (e.g., take first N, derive nextCursor)
-//        let items = Array(merged.prefix(limit))
-//        let nextCursor: String? = nil // implement cursor generation as needed
 
         return FeedResponseDTO(items: merged)
     }
@@ -124,3 +118,4 @@ struct CirclesController: RouteCollection {
         return sanitizedDTO
     }
 }
+
