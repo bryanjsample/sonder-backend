@@ -34,32 +34,32 @@ enum InputSanitizer {
     
     static func sanitizePost(_ post: PostDTO) -> PostDTO {
         let id = post.id ?? nil
-        let circle = sanitizeCircle(CircleDTO(from: post.circle)).toModel()
-        let author = sanitizeUser(UserDTO(from: post.author)).toModel()
+        let circleID = post.circleID
+        let authorID = post.authorID
         let content = sanitizeTextBlock(post.content)
         let createdAt = post.createdAt ?? nil
-        return PostDTO(id: id, circle: circle, author: author, content: content, createdAt: createdAt)
+        return PostDTO(id: id, circleID: circleID, authorID: authorID, content: content, createdAt: createdAt)
     }
     
     static func sanitizeEvent(_ event: CalendarEventDTO) -> CalendarEventDTO {
         let id = event.id ?? nil
-        let host = sanitizeUser(UserDTO(from: event.host)).toModel()
-        let circle = sanitizeCircle(CircleDTO(from: event.circle)).toModel()
+        let hostID = event.hostID
+        let circleID = event.circleID
         let title = sanitizeTitle(event.title)
         let description = sanitizeTextBlock(event.description)
         let startTime = event.startTime
         let endTime = event.endTime
         let createdAt = event.createdAt ?? nil
-        return CalendarEventDTO(id: id, host: host, circle: circle, title: title, description: description, startTime: startTime, endTime: endTime, createdAt: createdAt)
+        return CalendarEventDTO(id: id, hostID: hostID, circleID: circleID, title: title, description: description, startTime: startTime, endTime: endTime, createdAt: createdAt)
     }
     
     static func sanitizeComment(_ comment: CommentDTO) -> CommentDTO {
         let id = comment.id ?? nil
-        let post = sanitizePost(PostDTO(from: comment.post)).toModel()
-        let author = sanitizeUser(UserDTO(from: comment.author)).toModel()
+        let postID = comment.postID
+        let authorID = comment.authorID
         let content = sanitizeTextBlock(comment.content)
         let createdAt = comment.createdAt ?? nil
-        return CommentDTO(id: id, post: post, author: author, content: content, createdAt: createdAt)
+        return CommentDTO(id: id, postID: postID, authorID: authorID, content: content, createdAt: createdAt)
     }
     
     static func sanitizeName(_ name: String) -> String {

@@ -64,8 +64,8 @@ struct CalendarEventsController: RouteCollection {
         
         print("\n\n\neventDTO=\(eventDTO)\n\n\n")
         
-        eventDTO.host = user
-        eventDTO.circle = circle
+        eventDTO.hostID = user.id!
+        eventDTO.circleID = circle.id!
         
         print("\n\n\neventDTO=\(eventDTO)\n\n\n")
         
@@ -73,7 +73,7 @@ struct CalendarEventsController: RouteCollection {
         
         print("\n\n\nsaniEventDTO=\(sanitizedDTO)\n\n\n")
         
-        let calendarEvent = sanitizedDTO.toModel()
+        let calendarEvent = sanitizedDTO.toModel()    // error is occurring right here
         
         if try await eventExists(calendarEvent, on: req.db) {
             throw Abort(.badRequest, reason: "Event already exists")
@@ -85,8 +85,8 @@ struct CalendarEventsController: RouteCollection {
     
     func editEvent(req: Request) async throws -> CalendarEventDTO {
         func transferFields(_ dto: CalendarEventDTO, event: CalendarEvent) {
-            event.host = dto.host
-            event.circle = dto.circle
+            event.$host.id = dto.hostID
+            event.$circle.id = dto.circleID
             event.title = dto.title
             event.description = dto.description
             event.startTime = dto.startTime

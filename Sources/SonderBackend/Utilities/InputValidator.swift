@@ -30,14 +30,10 @@ enum InputValidator {
     }
     
     static func validatePost(_ post: PostDTO) throws {
-        try validateCircle(CircleDTO(from: post.circle))
-        try validateUser(UserDTO(from: post.author))
         try validateString(data: post.content, inputField: InputField.textBlock)
     }
     
     static func validateEvent(_ event: CalendarEventDTO) throws {
-        try validateUser(UserDTO(from: event.host))
-        try validateCircle(CircleDTO(from: event.circle))
         try validateString(data: event.title, inputField: InputField.title)
         try validateString(data: event.description, inputField: InputField.description)
         guard event.startTime < event.endTime else {
@@ -49,8 +45,6 @@ enum InputValidator {
     }
     
     static func validateComment(_ comment: CommentDTO) throws {
-        try validatePost(PostDTO(from: comment.post))
-        try validateUser(UserDTO(from: comment.author))
         try validateString(data: comment.content, inputField: InputField.textBlock)
     }
     

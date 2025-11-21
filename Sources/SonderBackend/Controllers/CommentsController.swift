@@ -52,8 +52,8 @@ struct CommentsController: RouteCollection {
         
         var commentDTO = try req.content.decode(CommentDTO.self)
         
-        commentDTO.post = post
-        commentDTO.author = user
+        commentDTO.postID = post.id!
+        commentDTO.authorID = user.id!
         
         let sanitizedDTO = try validateAndSanitize(commentDTO)
         let comment = sanitizedDTO.toModel()

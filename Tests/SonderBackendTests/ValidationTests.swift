@@ -352,14 +352,12 @@ struct ValidationTests {
             #expect(throws: ValidationError.self) {
                 try InputValidator.validateString(data: circleName, inputField: InputField.title)
             }
-            print("\(circleName)")
         }
         
         for circleName in emptyCircleNames {
             #expect(throws: ValidationError.self) {
                 try InputValidator.validateString(data: circleName, inputField: InputField.title)
             }
-            print("\(circleName)")
         }
     }
     

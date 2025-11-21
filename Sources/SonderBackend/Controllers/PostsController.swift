@@ -61,8 +61,8 @@ struct PostsController: RouteCollection {
         
         var postDTO = try req.content.decode(PostDTO.self)
         
-        postDTO.circle = circle
-        postDTO.author = user
+        postDTO.circleID = circle.id!
+        postDTO.authorID = user.id!
         
         let sanitizedDTO = try validateAndSanitize(postDTO)
         let post = sanitizedDTO.toModel()

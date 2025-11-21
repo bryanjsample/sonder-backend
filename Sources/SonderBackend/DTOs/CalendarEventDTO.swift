@@ -9,8 +9,8 @@ import Vapor
 
 struct CalendarEventDTO: Content {
     var id: UUID?
-    var host: User
-    var circle: Circle
+    var hostID: UUID
+    var circleID: UUID
     var title: String
     var description: String
     var startTime: Date
@@ -20,8 +20,8 @@ struct CalendarEventDTO: Content {
     func toModel() -> CalendarEvent {
         let model = CalendarEvent()
         model.id = self.id
-        model.host = self.host
-        model.circle = self.circle
+        model.$host.id = self.hostID // error right here
+        model.$circle.id = self.circleID
         model.title = self.title
         model.description = self.description
         model.startTime = self.startTime
@@ -35,8 +35,8 @@ extension CalendarEventDTO {
     
     init(from event: CalendarEvent) {
         self.id = event.id ?? nil
-        self.host = event.host
-        self.circle = event.circle
+        self.hostID = event.$host.id
+        self.circleID = event.$circle.id
         self.title = event.title
         self.description = event.description
         self.startTime = event.startTime
