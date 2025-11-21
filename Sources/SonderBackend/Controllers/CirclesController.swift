@@ -32,7 +32,7 @@ struct CirclesController: RouteCollection {
         }
     }
     
-    func createCircle(req: Request) async throws -> Response {
+    func createCircle(req: Request) async throws -> CircleDTO {
         let dto = try req.content.decode(CircleDTO.self)
         let sanitizedDTO = try validateAndSanitize(dto)
         let circle = sanitizedDTO.toModel()
@@ -41,8 +41,7 @@ struct CirclesController: RouteCollection {
             throw Abort(.badRequest, reason: "Circle already exists")
         } else {
             try await circle.save(on: req.db)
-            let dto = CircleDTO(from: circle)
-            return Response(status: .created, body: .init(data: try JSONEncoder().encode(dto)))
+            return CircleDTO(from: circle)
         }
     }
     

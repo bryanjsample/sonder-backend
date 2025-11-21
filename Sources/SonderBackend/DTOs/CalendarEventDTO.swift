@@ -22,6 +22,7 @@ struct CalendarEventDTO: Content {
         model.id = self.id
         model.host = self.host
         model.circle = self.circle
+        model.title = self.title
         model.description = self.description
         model.startTime = self.startTime
         model.endTime = self.endTime

@@ -2,7 +2,7 @@
 //  CircleTests.swift
 //  SonderBackend
 //
-//  Created by Bryan Sample on 11/17/25.
+//  Created by Test Generator on 11/20/25.
 //
 
 @testable import SonderBackend
@@ -10,8 +10,11 @@ import VaporTesting
 import Testing
 import Fluent
 
-@Suite("Circle Tests", .serialized)
+@Suite("Circle Endpoint Tests", .serialized)
 struct CircleTests {
+    
+    let helper = TestHelpers()
+    
     private func withApp(_ test: (Application) async throws -> ()) async throws {
         let app = try await Application.make(.testing)
         do {
@@ -26,112 +29,99 @@ struct CircleTests {
         }
         try await app.asyncShutdown()
     }
-    
-    // Sample DTOs for creating circles (no edge-case validation here)
-    let circleDTOs: [CircleDTO] = [
-        CircleDTO(name: "iOS Devs", description: "A circle for iOS developers", pictureUrl: nil),
-        CircleDTO(name: "Vapor Backend", description: "Server-side Swift enthusiasts", pictureUrl: "https://cdn.example.com/circles/vapor.png"),
-        CircleDTO(name: "Data Science", description: "Discuss ML and data engineering", pictureUrl: nil),
-        CircleDTO(name: "Design Systems", description: "UI/UX and design tokens", pictureUrl: "https://images.site.net/circles/design.webp"),
-        CircleDTO(name: "Open Source", description: "Contributors welcome", pictureUrl: nil),
-    ]
-    
-    // Sample models for GET/PATCH/DELETE flows
-    let circles: [Circle] = [
-        Circle(name: "SwiftUI", description: "All things SwiftUI", pictureUrl: nil),
-        Circle(name: "Kotlin Buddies", description: "Friendly neighbors across the aisle", pictureUrl: nil),
-        Circle(name: "Rustaceans", description: "Rust learning circle", pictureUrl: "https://static.domain.io/circles/rustaceans.png"),
-        Circle(name: "Databases", description: "Postgres, SQLite, and more", pictureUrl: nil),
-        Circle(name: "Game Dev", description: "Graphics and gameplay", pictureUrl: "https://cdn.example.com/circles/gamedev.jpg"),
-    ]
-    
-    @Test("Test /circles POST")
-    func createCircle() async throws {
+
+    @Test("POST /circles - Create Circle")
+    func testCreateCircle() async throws {
         try await withApp { app in
-            for dto in circleDTOs {
-                try await app.testing().test(.POST, "circles", beforeRequest: { req in
-                    try req.content.encode(dto)                }, afterResponse: { res in
-                    #expect(res.status == .created)
-                })
-            }
+            let name = "Circle\(UUID().uuidString.prefix(6))"
+            _ = try await helper.createCircle(app: app, name: name)
         }
     }
-    
-    @Test("Test /circles/:circleID GET")
-    func getCircle() async throws {
+
+    @Test("GET /circles/:circleID - Retrieve Circle")
+    func testRetrieveCircle() async throws {
         try await withApp { app in
-            for circle in circles {
-                try await circle.save(on: app.db)
-                let circleID = circle.id?.uuidString ?? "id_missing"
-                try await app.testing().test(.GET, "circles/\(circleID)", afterResponse: { res in
-                    #expect(res.status == .ok)
-                })
-            }
-        }
-    }
-    
-    @Test("Test /circles/:circleID PATCH")
-    func patchCircle() async throws {
-        try await withApp { app in
-            for circle in circles {
-                try await circle.save(on: app.db)
-                let circleID = circle.id?.uuidString ?? "id_missing"
-                var dto = CircleDTO(from: circle)
-                dto.description = "PATCHED DESCRIPTION"
-                try await app.testing().test(.PATCH, "circles/\(circleID)", beforeRequest: { req in
-                    try req.content.encode(dto)
-                }, afterResponse: { res in
-                    #expect(res.status == .ok)
-                })
-            }
-        }
-    }
-    
-    @Test("Test /circles/:circleID DELETE")
-    func deleteCircle() async throws {
-        try await withApp { app in
-            for circle in circles {
-                try await circle.save(on: app.db)
-                let circleID = circle.id?.uuidString ?? "id_missing"
-                let dto = CircleDTO(from: circle)
-                try await app.testing().test(.DELETE, "circles/\(circleID)", beforeRequest: { req in
-                    try req.content.encode(dto)
-                }, afterResponse: { res in
-                    #expect(res.status == .ok)
-                })
-            }
-        }
-    }
-    
-    @Test("Test /circles/:circleID/users GET")
-    func getCircleMembers() async throws {
-        try await withApp { app in
-            let circle = try await Circle.query(on: app.db)
-                .filter(\.$name == "TEST CIRCLE")
-                .first()
-            let circleID = circle?.id?.uuidString ?? "id_missing"
-            try await app.testing().test(.GET, "circles/\(circleID)/users", afterResponse: { res in
+            let name = "Circle\(UUID().uuidString.prefix(6))"
+            let circle = try await helper.createCircle(app: app, name: name)
+
+            try await app.test(.GET, "\(helper.circlesRoute)/\(try #require(circle.id).uuidString)", afterResponse: { res in
                 #expect(res.status == .ok)
-                let data = try res.content.decode([UserDTO].self)
-                print("\n\n\(data)\n\n")
             })
         }
     }
-    
-    @Test("Test /circles/:circleID/feed GET")
-    func getCircleFeed() async throws {
+
+    @Test("PATCH /circles/:circleID - Edit Circle")
+    func testEditCircle() async throws {
         try await withApp { app in
-            let circle = try await Circle.query(on: app.db)
-                .filter(\.$name == "TEST CIRCLE")
-                .first()
-            let circleID = circle?.id?.uuidString ?? "id_missing"
-            try await app.testing().test(.GET, "circles/\(circleID)/feed", afterResponse: { res in
+            let name = "Circle\(UUID().uuidString.prefix(6))"
+            let circle = try await helper.createCircle(app: app, name: name)
+
+            // Fetch DTO, modify, PATCH
+            var dto = try await app.getResponse(
+                method: .GET,
+                path: "\(helper.circlesRoute)/\(try #require(circle.id).uuidString)",
+                as: CircleDTO.self
+            )
+            dto.description = (dto.description) + " (edited)"
+
+            try await app.test(.PATCH, "\(helper.circlesRoute)/\(try #require(circle.id).uuidString)", beforeRequest: { req in
+                try req.content.encode(dto)
+            }, afterResponse: { res in
                 #expect(res.status == .ok)
-                let data = try res.content.decode(FeedResponseDTO.self)
-                print("\n\n\(data)\n\n")
             })
         }
     }
-    
+
+    @Test("DELETE /circles/:circleID - Remove Circle")
+    func testRemoveCircle() async throws {
+        try await withApp { app in
+            let name = "Circle\(UUID().uuidString.prefix(6))"
+            let circle = try await helper.createCircle(app: app, name: name)
+
+            try await app.test(.DELETE, "\(helper.circlesRoute)/\(try #require(circle.id).uuidString)", afterResponse: { res in
+                #expect(res.status == .ok)
+            })
+        }
+    }
+
+    @Test("GET /circles/:circleID/users - Retrieve Circle Users")
+    func testRetrieveCircleUsers() async throws {
+        try await withApp { app in
+            let name = "Circle\(UUID().uuidString.prefix(6))"
+            let circle = try await helper.createCircle(app: app, name: name)
+
+            try await app.test(.GET, "\(helper.circlesRoute)/\(try #require(circle.id).uuidString)/users", afterResponse: { res in
+                #expect(res.status == .ok)
+            })
+        }
+    }
+
+    @Test("GET /circles/:circleID/feed - Retrieve Circle Feed")
+    func testRetrieveCircleFeed() async throws {
+        try await withApp { app in
+            let name = "Circle\(UUID().uuidString.prefix(6))"
+            let circle = try await helper.createCircle(app: app, name: name)
+
+            // Seed feed with one post and one event
+            let email = "feedhost_\(UUID().uuidString)@example.com"
+            let user = try await helper.createUser(app: app, email: email)
+            _ = try await helper.createPost(app: app, circleID: try #require(circle.id), authorID: try #require(user.id), content: "Hello World")
+            _ = try await helper.createEvent(app: app, title: "Meetup \(UUID().uuidString.prefix(5))")
+
+            try await app.test(.GET, "\(helper.circlesRoute)/\(try #require(circle.id).uuidString)/feed", afterResponse: { res in
+                #expect(res.status == .ok)
+            })
+        }
+    }
 }
 
+private extension Application {
+    func getResponse<T: Decodable>(method: HTTPMethod, path: String, as type: T.Type) async throws -> T {
+        var decoded: T!
+        try await self.test(method, path, afterResponse: { res in
+            #expect(res.status == .ok)
+            decoded = try res.content.decode(T.self)
+        })
+        return decoded
+    }
+}
