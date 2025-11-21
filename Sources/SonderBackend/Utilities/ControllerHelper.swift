@@ -14,7 +14,6 @@ struct ControllerHelper {
     
     func getCircle(req: Request) async throws -> Circle {
         let circleIDParam = try req.parameters.require("circleID")
-        // let circleID = sanitize and validate(param)
         guard let circleUUID = UUID(uuidString: circleIDParam) else {
             throw Abort(.badRequest, reason: "Invalid circle ID")
         }
