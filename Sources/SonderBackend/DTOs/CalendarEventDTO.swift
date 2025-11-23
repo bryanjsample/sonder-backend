@@ -20,7 +20,7 @@ struct CalendarEventDTO: Content {
     func toModel() -> CalendarEvent {
         let model = CalendarEvent()
         model.id = self.id
-        model.$host.id = self.hostID // error right here
+        model.$host.id = self.hostID
         model.$circle.id = self.circleID
         model.title = self.title
         model.description = self.description

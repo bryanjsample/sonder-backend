@@ -73,7 +73,7 @@ struct CalendarEventsController: RouteCollection {
         
         print("\n\n\nsaniEventDTO=\(sanitizedDTO)\n\n\n")
         
-        let calendarEvent = sanitizedDTO.toModel()    // error is occurring right here
+        let calendarEvent = sanitizedDTO.toModel()
         
         if try await eventExists(calendarEvent, on: req.db) {
             throw Abort(.badRequest, reason: "Event already exists")
