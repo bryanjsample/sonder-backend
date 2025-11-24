@@ -21,4 +21,7 @@ func routes(_ app: Application) throws {
     // establish all endpoints to engage with a comment
     try app.register(collection: CommentsController())
     
+    // authorization endpoints
+    try app.register(collection: AuthController())
+    
 }

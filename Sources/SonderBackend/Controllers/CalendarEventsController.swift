@@ -57,22 +57,13 @@ struct CalendarEventsController: RouteCollection {
     
     func createEvent(req: Request) async throws -> CalendarEventDTO {
         let user = try await helper.getUser(req: req)
-        print("\n\n\nuser=\(user)\n\n\n")
         let circle = try await helper.getCircle(req: req)
-        print("\n\n\ncircle=\(circle)\n\n\n")
         var eventDTO = try req.content.decode(CalendarEventDTO.self)
-        
-        print("\n\n\neventDTO=\(eventDTO)\n\n\n")
         
         eventDTO.hostID = user.id!
         eventDTO.circleID = circle.id!
         
-        print("\n\n\neventDTO=\(eventDTO)\n\n\n")
-        
         let sanitizedDTO = try validateAndSanitize(eventDTO)
-        
-        print("\n\n\nsaniEventDTO=\(sanitizedDTO)\n\n\n")
-        
         let calendarEvent = sanitizedDTO.toModel()
         
         if try await eventExists(calendarEvent, on: req.db) {
