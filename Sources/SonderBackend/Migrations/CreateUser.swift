@@ -19,6 +19,7 @@ struct CreateUser: AsyncMigration {
             .field("picture_url", .string)
             .field("created_at", .datetime)
             .field("last_modified", .datetime)
+            .unique(on: "email")
             .create()
     }
     

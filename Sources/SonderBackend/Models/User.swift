@@ -9,7 +9,7 @@ import Fluent
 import Foundation
 import Vapor
 
-final class User: Model, @unchecked Sendable, SessionAuthenticatable {
+final class User: Model, @unchecked Sendable, Authenticatable {
     static let schema = "users"
     
     @ID(key: .id)
@@ -17,6 +17,9 @@ final class User: Model, @unchecked Sendable, SessionAuthenticatable {
     
     @OptionalParent(key: "circle_id")
     var circle: Circle?
+    
+    @OptionalChild(for: \.$user)
+    var token: UserToken?
     
     @Children(for: \.$author)
     var posts: [Post]
@@ -26,7 +29,7 @@ final class User: Model, @unchecked Sendable, SessionAuthenticatable {
     
     @Children(for: \.$host)
     var events: [CalendarEvent]
-    
+
     @Field(key: "email")
     var email: String
     
@@ -47,8 +50,6 @@ final class User: Model, @unchecked Sendable, SessionAuthenticatable {
     
     @Timestamp(key: "last_modified", on: .update)
     var lastModified: Date?
-    
-    var sessionID: UUID { id ?? UUID() }
     
     init() { }
     

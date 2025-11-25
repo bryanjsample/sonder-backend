@@ -19,13 +19,14 @@ public func configure(_ app: Application) async throws {
         tls: .prefer(try .init(configuration: .clientDefault)))
     ), as: .psql)
     
-    if app.environment == .testing {
+//    if app.environment == .testing {
         app.logger.logLevel = .debug
-    } else {
-        app.logger.logLevel = .info
-    }
+//    } else {
+//        app.logger.logLevel = .info
+//    }
     app.migrations.add(CreateCircle())
     app.migrations.add(CreateUser())
+    app.migrations.add(CreateUserToken())
     app.migrations.add(CreateCalendarEvent())
     app.migrations.add(CreatePost())
     app.migrations.add(CreateComment())
@@ -35,4 +36,12 @@ public func configure(_ app: Application) async throws {
 
     // register routes
     try routes(app)
+    
+    app.get("debug", "routes") { req -> String in
+        let lines = req.application.routes.all.map { route in
+            let path = route.path.map(\.description).joined(separator: "/")
+            return "\(route.method.rawValue) /\(path)"
+        }
+        return lines.sorted().joined(separator: "\n")
+    }
 }
