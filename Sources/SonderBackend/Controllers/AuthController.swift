@@ -26,50 +26,43 @@ struct AuthController: RouteCollection {
             scope: ["profile", "email"]) { req, accToken in
                 req.logger.info("token = \(accToken)")
                 let userInfo = try await Google.getUser(on: req)
-                req.logger.info("userInfo = \(userInfo)")
-                if let existingUser = try await User.query(on: req.db)
-                    .filter(\.$email == userInfo.email)
-                    .first() {
-                    req.logger.info("existingUser = \(existingUser)")
-                    let token = try existingUser.generateToken()
-                    try await token.save(on: req.db)
-                    return UserTokenDTO(from: token)
-                } else {
-                    let newUser = try User(
-                        email: userInfo.email,
-                        firstName: userInfo.name,
-                        lastName: userInfo.name
-                    )
-                    req.logger.info("user = \(newUser)")
-                    try await newUser.save(on: req.db)
-                    let token = try newUser.generateToken()
-                    try await token.save(on: req.db)
-                    return UserTokenDTO(from: token)
-                }
+                let query = try URLEncodedFormEncoder().encode(userInfo)
+//                return userInfo
+                return req.redirect(to: "/auth/google/success?\(query)")
         }
         
         let success = routes.grouped("auth", "google", "success")
-        success.get(use: googleSuccess)
+        success.get(use: processGoogleUser)
         
     }
     
-    func googleSuccess(req: Request) async throws -> Google.GoogleUserInfo {
-        guard let user = req.auth.get(User.self) else {
-            throw Abort(.unauthorized)
-        }
-        let query = try req.query.decode(OAuthCallbackQuery.self)
+    func processGoogleUser(req: Request) async throws -> UserTokenDTO {
         
-        req.logger.info("code = \(query.code)")
-        if let scope = query.scope {
-            req.logger.info("scope = \(scope)")
+        let userInfo = try req.query.decode(Google.GoogleUserInfo.self)
+        
+        req.logger.info("userInfo = \(userInfo)")
+        if let existingUser = try await User.query(on: req.db)
+            .filter(\.$email == userInfo.email)
+            .first() {
+            req.logger.info("existingUser = \(existingUser)")
+            
+            if let token = try await existingUser.$token.query(on: req.db).first() {
+                return UserTokenDTO(from: token)
+            } else {
+                throw Abort(.internalServerError, reason: "User doesnt have a registered token")
+            }
+        } else {
+            let newUser = try User(
+                email: userInfo.email,
+                firstName: userInfo.name,
+                lastName: userInfo.name
+            )
+            req.logger.info("user = \(newUser)")
+            try await newUser.save(on: req.db)
+            let token = try newUser.generateToken()
+            try await token.save(on: req.db)
+            return UserTokenDTO(from: token)
         }
-        if let authUser = query.authuser {
-            req.logger.info("authUser = \(authUser)")
-        }
-        if let prompt = query.prompt {
-            req.logger.info("prompt = \(prompt)")
-        }
-        return try await Google.getUser(on: req)
     }
 }
 
