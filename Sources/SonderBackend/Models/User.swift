@@ -7,8 +7,9 @@
 
 import Fluent
 import Foundation
+import Vapor
 
-final class User: Model, @unchecked Sendable {
+final class User: Model, @unchecked Sendable, SessionAuthenticatable {
     static let schema = "users"
     
     @ID(key: .id)
@@ -46,6 +47,8 @@ final class User: Model, @unchecked Sendable {
     
     @Timestamp(key: "last_modified", on: .update)
     var lastModified: Date?
+    
+    var sessionID: UUID { id ?? UUID() }
     
     init() { }
     
