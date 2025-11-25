@@ -18,7 +18,7 @@ final class User: Model, @unchecked Sendable, Authenticatable {
     @OptionalParent(key: "circle_id")
     var circle: Circle?
     
-    @OptionalChild(for: \.$user)
+    @OptionalChild(for: \.$owner)
     var token: UserToken?
     
     @Children(for: \.$author)
@@ -71,4 +71,13 @@ final class User: Model, @unchecked Sendable, Authenticatable {
         self.pictureUrl = pictureUrl
     }
     
+}
+
+extension User {
+    func generateToken() throws -> UserToken {
+        try .init(
+            value: [UInt8].random(count: 16).base64,
+            userID: self.requireID()
+        )
+    }
 }

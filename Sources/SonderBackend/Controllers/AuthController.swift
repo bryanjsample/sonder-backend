@@ -23,27 +23,29 @@ struct AuthController: RouteCollection {
             from:  Google.self,
             authenticate: "auth/google",
             callback: googleCallbackURL,
-            scope: ["profile", "email"]) { req, token in
-                req.logger.info("token = \(token)")
+            scope: ["profile", "email"]) { req, accToken in
+                req.logger.info("token = \(accToken)")
                 let userInfo = try await Google.getUser(on: req)
                 req.logger.info("userInfo = \(userInfo)")
                 if let existingUser = try await User.query(on: req.db)
                     .filter(\.$email == userInfo.email)
                     .first() {
                     req.logger.info("existingUser = \(existingUser)")
-                    req.auth.login(existingUser)
+                    let token = try existingUser.generateToken()
+                    try await token.save(on: req.db)
+                    return UserTokenDTO(from: token)
                 } else {
-                    let user = try User(
+                    let newUser = try User(
                         email: userInfo.email,
                         firstName: userInfo.name,
                         lastName: userInfo.name
                     )
-                    req.logger.info("user = \(user)")
-                    try await user.save(on: req.db)
-                    req.auth.login(user)
+                    req.logger.info("user = \(newUser)")
+                    try await newUser.save(on: req.db)
+                    let token = try newUser.generateToken()
+                    try await token.save(on: req.db)
+                    return UserTokenDTO(from: token)
                 }
-
-                return req.redirect(to: "/auth/google/success")
         }
         
         let success = routes.grouped("auth", "google", "success")
