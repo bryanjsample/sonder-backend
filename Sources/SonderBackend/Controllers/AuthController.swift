@@ -15,7 +15,7 @@ struct AuthController: RouteCollection {
     
     func boot(routes: any RoutesBuilder) throws {
         
-        guard let googleCallbackURL = Environment.get("GOOGLE_CALLBACK_URL") else {
+        guard let googleCallbackURL = ProcessInfo.processInfo.environment["GOOGLE_CALLBACK_URL"] else {
             throw Abort(.badRequest, reason: "Google callback url not found")
         }
         
@@ -54,8 +54,10 @@ struct AuthController: RouteCollection {
         } else {
             let newUser = try User(
                 email: userInfo.email,
-                firstName: userInfo.name,
-                lastName: userInfo.name
+                firstName: userInfo.given_name,
+                lastName: userInfo.family_name,
+                pictureUrl: userInfo.picture,
+                
             )
             req.logger.info("user = \(newUser)")
             try await newUser.save(on: req.db)
@@ -79,10 +81,13 @@ extension AuthController {
 extension Google {
     struct GoogleUserInfo: Content {
         let email: String
-        let name: String
+        let email_verified: Bool
+        let given_name: String
+        let family_name: String
+        let picture: String?
     }
     
-    static func getUser(on req: Request) async throws -> GoogleUserInfo {
+    static func getUser(on req: Request) async throws -> Google.GoogleUserInfo {
         var headers = HTTPHeaders()
         headers.bearerAuthorization = try BearerAuthorization(token: req.accessToken)
         req.logger.info("headers = \(headers)")
@@ -96,8 +101,18 @@ extension Google {
                 throw Abort(.internalServerError, reason: "Authentication failed")
             }
         }
+        let data = Data(buffer: response.body!)
+        let json = try JSONSerialization.jsonObject(with: data, options: [.mutableContainers, .mutableLeaves])
+        print("rawJSON = \(json)")
+
         let googInfo =  try response.content.decode(GoogleUserInfo.self)
-        req.logger.info("googInfo = \(googInfo)")
+        
+        if googInfo.email_verified {
+            req.logger.info("googInfo = \(googInfo)")
+        } else {
+            req.logger.info("email is not verified")
+        }
+        
         return googInfo
     }
 }
