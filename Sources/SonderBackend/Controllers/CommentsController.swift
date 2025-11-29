@@ -10,6 +10,9 @@ import Fluent
 
 struct CommentsController: RouteCollection {
     
+    // NEED TO AUTHORIZE EACH ENDPOINT
+    // NEED TO CHECK VALIDITY OF CIRCLE USER RELATION
+    
     let helper = ControllerHelper()
     
     func boot(routes: any RoutesBuilder) throws {

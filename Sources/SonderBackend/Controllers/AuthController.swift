@@ -11,6 +11,9 @@ import ImperialGoogle
 
 struct AuthController: RouteCollection {
     
+    // ENSURE AUTHORIZATION CORRECTLY ASSIGNS TOKEN BACK TO CLIENT
+    // DO I NEED TO MANUALLY SAVE MY ACCESS TOKEN AND LOAD IT INTO EACH REQUEST HEADER FROM THE CLIENT?
+    
     let helper = ControllerHelper()
     
     func boot(routes: any RoutesBuilder) throws {

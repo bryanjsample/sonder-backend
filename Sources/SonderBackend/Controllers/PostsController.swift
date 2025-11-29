@@ -10,6 +10,9 @@ import Fluent
 
 struct PostsController: RouteCollection {
     
+    // NEED TO AUTHORIZE ALL ENDPOINTS
+    // NEED TO ENSURE USER IS IN GROUP BEFORE RETURNING POSTS
+    
     let helper = ControllerHelper()
     
     func boot(routes: any RoutesBuilder) throws {

@@ -10,6 +10,9 @@ import Fluent
 
 struct CirclesController: RouteCollection {
     
+    // NEED TO AUTHORIZE ALL ENDPOINTS
+    // WHO CAN CREATE A CIRCLE AND WHEN
+    
     let helper = ControllerHelper()
     
     func boot(routes: any RoutesBuilder) throws {

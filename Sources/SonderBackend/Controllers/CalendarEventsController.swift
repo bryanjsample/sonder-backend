@@ -10,6 +10,9 @@ import Fluent
 
 struct CalendarEventsController: RouteCollection {
     
+    // AUTHORIZE ALL ENDPOINTS
+    // VALIDATE USER CIRCLE RELATION
+    
     let helper = ControllerHelper()
     
     func boot(routes: any RoutesBuilder) throws {

@@ -1,52 +1,35 @@
 //
-//  UsersController.swift
+//  MeController.swift
 //  SonderBackend
 //
-//  Created by Bryan Sample on 11/13/25.
+//  Created by Bryan Sample on 11/29/25.
 //
-
-
-// NEED TO REPLACE TESTS BUT OTHERWISE THIS IS REDUNDANT
 
 import Vapor
 import Fluent
 
-struct UsersController: RouteCollection {
+struct MeController: RouteCollection {
     
     let helper = ControllerHelper()
     
     func boot(routes: any RoutesBuilder) throws {
-        let users = routes.grouped("users")
+        let me = routes.grouped("me")
         
-        users.post(use: createUser)
+        me.get(use: retrieve)
+        me.patch(use: edit)
+        me.delete(use: remove)
         
-        users.group(":userID") { user in
-            user.get(use: retrieve)
-            user.patch(use: edit)
-            user.delete(use: remove)
-        }
     }
     
     
-    func createUser(req: Request) async throws -> UserDTO {
-        let dto = try req.content.decode(UserDTO.self)
-        let sanitizedDTO = try validateAndSanitize(dto)
-        let user = sanitizedDTO.toModel()
-        
-        if try await userExists(user, on: req.db) {
-            throw Abort(.badRequest, reason: "User already exists")
-        } else {
-            try await user.save(on: req.db)
-            return UserDTO(from: user)
-        }
-    }
+    // authorize each request to this endpoint
     
     func retrieve(req: Request) async throws -> UserDTO {
-        let user = try await helper.getUser(req: req)
-        return UserDTO(from: user)
+        let me = try await getMe(req: req)
+        return UserDTO(from: me)
     }
     
-    func edit(req: Request) async throws ->  UserDTO {
+    func edit(req: Request) async throws -> UserDTO {
         func transferFields(_ dto: UserDTO, _ user: User, ) {
             user.email = dto.email
             user.firstName = dto.firstName
@@ -58,26 +41,39 @@ struct UsersController: RouteCollection {
                 user.pictureUrl = pictureUrl
             }
         }
-        let user = try await helper.getUser(req: req)
+        let me = try await getMe(req: req)
         
         let dto = try req.content.decode(UserDTO.self)
         let sanitizedDTO = try validateAndSanitize(dto)
         
-        transferFields(sanitizedDTO, user)
+        transferFields(sanitizedDTO, me)
         
-        try await user.update(on: req.db)
+        try await me.update(on: req.db)
         
-        return UserDTO(from: user)
+        return UserDTO(from: me)
+        
     }
     
     func remove(req: Request) async throws -> Response {
-        let user = try await helper.getUser(req: req)
-        try await user.delete(on: req.db)
+        let me = try await getMe(req: req)
+        try await me.delete(on: req.db)
         return Response(status: .ok, body: .init(stringLiteral: "User was removed from database"))
     }
     
     func userExists(_ user: User, on db: any Database) async throws -> Bool {
         return try await User.find(user.id, on: db) != nil
+    }
+    
+    func getMe(req: Request) async throws -> User {
+        guard let accessToken = try req.accessToken else {
+            throw Abort(.unauthorized, reason: "Access token not included or invalid")
+        }
+        guard let token = try await UserToken.query(on: req.db)
+            .filter(\.$value == accessToken)
+            .first() else {
+            throw Abort(.unauthorized, reason: "Access token not found in database")
+        }
+        return try await token.$owner.get(on: req.db)
     }
     
     func validateAndSanitize(_ userDTO: UserDTO) throws -> UserDTO {
