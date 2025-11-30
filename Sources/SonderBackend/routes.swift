@@ -6,11 +6,14 @@ func routes(_ app: Application) throws {
         "Sonder Homepage"
     }
     
+    // establish endpoints to authorize and onboard users
+    try app.register(collection: AuthController())
+    
+    // establish all endpoints to engage with a specific user
+    try app.register(collection: MeController())
+    
     // establish all endpoints to engage with a group
     try app.register(collection: CirclesController())
-    
-    // establishes all endpoints to engage with a user
-    try app.register(collection: UsersController())
     
     // establish all endpoints to engage with an event
     try app.register(collection: CalendarEventsController())
@@ -20,8 +23,5 @@ func routes(_ app: Application) throws {
     
     // establish all endpoints to engage with a comment
     try app.register(collection: CommentsController())
-    
-    // authorization endpoints
-    try app.register(collection: AuthController())
     
 }

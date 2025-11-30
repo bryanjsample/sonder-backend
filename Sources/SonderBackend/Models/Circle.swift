@@ -52,3 +52,9 @@ final class Circle: Model, @unchecked Sendable {
         self.pictureUrl = pictureUrl
     }
 }
+
+extension Circle {
+    func exists(on db: any Database) async throws -> Bool {
+        return try await Circle.find(self.id, on: db) != nil
+    }
+}

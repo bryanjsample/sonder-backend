@@ -49,4 +49,10 @@ extension UserDTO {
         self.username = user.username ?? nil
         self.pictureUrl = user.pictureUrl ?? nil
     }
+    
+    func validateAndSanitize() throws -> UserDTO {
+        try InputValidator.validateUser(self)
+        let sanitizedDTO = InputSanitizer.sanitizeUser(self)
+        return sanitizedDTO
+    }
 }

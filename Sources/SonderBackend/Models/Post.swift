@@ -34,11 +34,7 @@ final class Post: Model, @unchecked Sendable {
     
     @Timestamp(key: "last_modified", on: .update)
     var lastModified: Date?
-    
-//    @Children(for: \.$post)
-//    var comments = [Comment]
-//    
-//    @Children(for: \.$post)
+
     
     init() { }
     
@@ -54,5 +50,11 @@ final class Post: Model, @unchecked Sendable {
         self.$author.id = try author.requireID()
         self.content = content
         self.createdAt = createdAt
+    }
+}
+
+extension Post {
+    func exists(on db: any Database) async throws -> Bool {
+        return try await Post.find(self.id, on: db) != nil
     }
 }

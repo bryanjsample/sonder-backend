@@ -36,4 +36,10 @@ extension PostDTO {
         self.createdAt = post.createdAt ?? nil
     }
     
+    func validateAndSanitize() throws -> PostDTO {
+        try InputValidator.validatePost(self)
+        let sanitizedDTO = InputSanitizer.sanitizePost(self)
+        return sanitizedDTO
+    }
+    
 }

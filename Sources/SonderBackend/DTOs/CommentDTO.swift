@@ -34,4 +34,10 @@ extension CommentDTO {
         self.content = comment.content
         self.createdAt = comment.createdAt ?? nil
     }
+    
+    func validateAndSanitize() throws -> CommentDTO {
+        try InputValidator.validateComment(self)
+        let sanitizedDTO = InputSanitizer.sanitizeComment(self)
+        return sanitizedDTO
+    }
 }

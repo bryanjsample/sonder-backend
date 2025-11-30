@@ -80,4 +80,8 @@ extension User {
             userID: self.requireID()
         )
     }
+    
+    func exists(on db: any Database) async throws -> Bool {
+        return try await User.find(self.id, on: db) != nil
+    }
 }

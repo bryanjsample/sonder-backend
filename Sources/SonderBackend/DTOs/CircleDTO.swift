@@ -39,4 +39,10 @@ extension CircleDTO {
         self.description = circle.description
         self.pictureUrl = circle.pictureUrl ?? nil
     }
+    
+    func validateAndSanitize() throws -> CircleDTO {
+        try InputValidator.validateCircle(self)
+        let sanitizedDTO = InputSanitizer.sanitizeCircle(self)
+        return sanitizedDTO
+    }
 }

@@ -10,22 +10,21 @@ import Fluent
 
 struct MeController: RouteCollection {
     
-    let helper = ControllerHelper()
-    
     func boot(routes: any RoutesBuilder) throws {
-        let me = routes.grouped("me")
+        let meProtected = routes.grouped("me").grouped(UserToken.authenticator())
         
-        me.get(use: retrieve)
-        me.patch(use: edit)
-        me.delete(use: remove)
+        meProtected.get(use: retrieve)
+        meProtected.patch(use: edit)
+        meProtected.delete(use: remove)
+        
+        meProtected.group("events") { myEvents in
+            myEvents.get(use: retrieveEvents)
+        }
         
     }
     
-    
-    // authorize each request to this endpoint
-    
     func retrieve(req: Request) async throws -> UserDTO {
-        let me = try await getMe(req: req)
+        let me = try req.auth.require(User.self)
         return UserDTO(from: me)
     }
     
@@ -41,10 +40,10 @@ struct MeController: RouteCollection {
                 user.pictureUrl = pictureUrl
             }
         }
-        let me = try await getMe(req: req)
+        let me = try req.auth.require(User.self)
         
         let dto = try req.content.decode(UserDTO.self)
-        let sanitizedDTO = try validateAndSanitize(dto)
+        let sanitizedDTO = try dto.validateAndSanitize()
         
         transferFields(sanitizedDTO, me)
         
@@ -55,31 +54,31 @@ struct MeController: RouteCollection {
     }
     
     func remove(req: Request) async throws -> Response {
-        let me = try await getMe(req: req)
+        let me = try req.auth.require(User.self)
         try await me.delete(on: req.db)
         return Response(status: .ok, body: .init(stringLiteral: "User was removed from database"))
     }
-    
-    func userExists(_ user: User, on db: any Database) async throws -> Bool {
-        return try await User.find(user.id, on: db) != nil
+
+    func retrieveEvents(req: Request) async throws -> [CalendarEventDTO] {
+        
+        // parse query parameters such as circle= role= from=&to= page=1&per=20
+        
+        let user = try req.auth.require(User.self)
+        return try await CalendarEvent.query(on: req.db)
+            .filter(\.$host.$id == user.requireID())
+            .all()
+            .map { CalendarEventDTO(from: $0) }
     }
     
-    func getMe(req: Request) async throws -> User {
-        guard let accessToken = try req.accessToken else {
-            throw Abort(.unauthorized, reason: "Access token not included or invalid")
-        }
-        guard let token = try await UserToken.query(on: req.db)
-            .filter(\.$value == accessToken)
-            .first() else {
-            throw Abort(.unauthorized, reason: "Access token not found in database")
-        }
-        return try await token.$owner.get(on: req.db)
+    func retrievePosts(req: Request) async throws -> [PostDTO] {
+        
+        // parse query parameters to reduce runtime query speed
+        
+        let user = try req.auth.require(User.self)
+        return try await Post.query(on: req.db)
+            .filter(\.$author.$id == user.requireID())
+            .all()
+            .map { PostDTO(from: $0) }
+        
     }
-    
-    func validateAndSanitize(_ userDTO: UserDTO) throws -> UserDTO {
-        try InputValidator.validateUser(userDTO)
-        let sanitizedDTO = InputSanitizer.sanitizeUser(userDTO)
-        return sanitizedDTO
-    }
-    
 }

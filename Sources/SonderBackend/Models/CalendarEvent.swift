@@ -66,3 +66,9 @@ final class CalendarEvent: Model, @unchecked Sendable {
         self.createdAt = createdAt
     }
 }
+
+extension CalendarEvent {
+    func exists(on db: any Database) async throws -> Bool {
+        return try await CalendarEvent.find(self.id, on: db) != nil
+    }
+}

@@ -44,4 +44,10 @@ extension CalendarEventDTO {
         self.createdAt = event.createdAt
     }
     
+    func validateAndSanitize() throws -> CalendarEventDTO {
+        try InputValidator.validateEvent(self)
+        let sanitizedDTO = InputSanitizer.sanitizeEvent(self)
+        return sanitizedDTO
+    }
+    
 }
