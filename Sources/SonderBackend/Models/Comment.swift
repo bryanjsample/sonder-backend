@@ -33,8 +33,8 @@ final class Comment: Model, @unchecked Sendable {
 
     init(
         id: UUID? = nil,
-        postID: Post,
-        authorID: User,
+        post: Post,
+        author: User,
         content: String,
     ) throws {
         self.id = id

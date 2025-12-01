@@ -1,23 +1,23 @@
 //
-//  AccessToken.swift
+//  RefreshToken.swift
 //  SonderBackend
 //
-//  Created by Bryan Sample on 11/24/25.
+//  Created by Bryan Sample on 12/1/25.
 //
 
 import Fluent
 import Foundation
 import Vapor
 
-final class AccessToken: Model, @unchecked Sendable {
-    static let schema = "access_tokens"
-
+final class RefreshToken: Model, @unchecked Sendable {
+    static let schema = "refresh_tokens"
+    
     @ID(key: .id)
     var id: UUID?
-
+    
     @Field(key: "token")
     var token: String
-
+    
     @Parent(key: "user_id")
     var owner: User
     
@@ -27,8 +27,8 @@ final class AccessToken: Model, @unchecked Sendable {
     @Field(key: "revoked")
     var revoked: Bool
 
-    init() {}
-
+    init() { }
+    
     init(
         id: UUID? = nil,
         token: String,
@@ -44,10 +44,10 @@ final class AccessToken: Model, @unchecked Sendable {
     }
 }
 
-extension AccessToken: ModelTokenAuthenticatable {
-    static var valueKey: KeyPath<AccessToken, Field<String>> { \.$token }
-    static var userKey: KeyPath<AccessToken, Parent<User>> { \.$owner }
-
+extension RefreshToken: ModelTokenAuthenticatable {
+    static var valueKey: KeyPath<RefreshToken, Field<String>> { \.$token }
+    static var userKey: KeyPath<RefreshToken, Parent<User>> { \.$owner }
+    
     var isValid: Bool {
         self.expiresAt > Date.now && !self.revoked
     }

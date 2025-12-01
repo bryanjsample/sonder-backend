@@ -18,8 +18,11 @@ final class User: Model, @unchecked Sendable, Authenticatable {
     @OptionalParent(key: "circle_id")
     var circle: Circle?
 
-    @OptionalChild(for: \.$owner)
-    var token: AccessToken?
+    @Children(for: \.$owner)
+    var accessTokens: [AccessToken]
+    
+    @Children(for: \.$owner)
+    var refreshTokens: [RefreshToken]
 
     @Children(for: \.$author)
     var posts: [Post]
@@ -73,11 +76,43 @@ final class User: Model, @unchecked Sendable, Authenticatable {
 
 }
 
+extension Date {
+    func adding(minutes: Int) throws -> Date {
+        guard let future = Calendar.current.date(byAdding: .minute, value: minutes, to: self) else {
+            throw Abort(.internalServerError, reason: "Error adding timeframe to current date while issuing token")
+        }
+        return future
+    }
+    func adding(hours: Int) throws -> Date {
+        guard let future =  Calendar.current.date(byAdding: .hour, value: hours, to: self) else {
+            throw Abort(.internalServerError, reason: "Error adding timeframe to current date while issuing token")
+        }
+        return future
+    }
+    func adding(days: Int) throws -> Date {
+        guard let future = Calendar.current.date(byAdding: .day, value: days, to: self) else {
+            throw Abort(.internalServerError, reason: "Error adding timeframe to current date while issuing token")
+        }
+        return future
+    }
+}
+
 extension User {
-    func generateToken() throws -> AccessToken {
+    func generateAccessToken() throws -> AccessToken {
         try .init(
-            value: [UInt8].random(count: 16).base64,
-            userID: self.requireID()
+            token: [UInt8].random(count: 16).base64,
+            owner: self,
+            expiresAt: Date.now.adding(hours: 1),
+            revoked: false
+        )
+    }
+    
+    func generateRefreshToken() throws -> RefreshToken {
+        try .init(
+            token: [UInt8].random(count: 64).base64,
+            owner: self,
+            expiresAt: Date.now.adding(days: 60),
+            revoked: false
         )
     }
 
