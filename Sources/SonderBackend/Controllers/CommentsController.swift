@@ -7,6 +7,7 @@
 
 import Vapor
 import Fluent
+import SonderDTOs
 
 struct CommentsController: RouteCollection {
     
@@ -28,7 +29,7 @@ struct CommentsController: RouteCollection {
         }
     }
     
-    func retrieveAll(req: Request) async throws ->  [CommentDTO] {
+    func retrieveAll(req: Request) async throws ->  Response {
         // authenticate user on request
         let _ = try req.auth.require(User.self)
         
@@ -37,12 +38,13 @@ struct CommentsController: RouteCollection {
         // confirm post exists -- may be more efficient to send back boolean rather than object
         let post = try await helper.getPost(req: req)
         
-        return try await post.$comments.query(on: req.db)
+        let commentDTOs =  try await post.$comments.query(on: req.db)
             .all()
             .map { CommentDTO(from: $0) }
+        return try helper.sendResponseObject(dto: commentDTOs)
     }
     
-    func createComment(req: Request) async throws -> CommentDTO {
+    func createComment(req: Request) async throws -> Response {
         // authenticate user on request
         let user = try req.auth.require(User.self)
         
@@ -60,11 +62,12 @@ struct CommentsController: RouteCollection {
             throw Abort(.badRequest, reason: "Comment already exists")
         } else {
             try await comment.save(on: req.db)
-            return CommentDTO(from: comment)
+            let dto = CommentDTO(from: comment)
+            return try helper.sendResponseObject(dto: dto)
         }
     }
     
-    func retrieve(req: Request) async throws -> CommentDTO {
+    func retrieve(req: Request) async throws -> Response {
         // authenticate user on request
         let _ = try req.auth.require(User.self)
         
@@ -74,10 +77,11 @@ struct CommentsController: RouteCollection {
         let _ = try await helper.getPost(req: req)
         
         let comment = try await helper.getComment(req: req)
-        return CommentDTO(from: comment)
+        let dto = CommentDTO(from: comment)
+        return try helper.sendResponseObject(dto: dto)
     }
     
-    func edit(req: Request) async throws -> CommentDTO {
+    func edit(req: Request) async throws -> Response {
         func transferFields(_ dto: CommentDTO, comment: Comment) {
             comment.content = dto.content
         }
@@ -94,7 +98,8 @@ struct CommentsController: RouteCollection {
         let sanitizedDTO = try dto.validateAndSanitize()
         transferFields(sanitizedDTO, comment: comment)
         try await comment.update(on: req.db)
-        return CommentDTO(from: comment)
+        let resDTO = CommentDTO(from: comment)
+        return try helper.sendResponseObject(dto: resDTO)
     }
     
     func remove(req: Request) async throws -> Response {
@@ -110,8 +115,25 @@ struct CommentsController: RouteCollection {
         try await comment.delete(on: req.db)
         return Response(status: .ok, body: .init(stringLiteral: "Comment was removed from the database"))
     }
-    
+}
 
-
+extension CommentDTO {
+    init(from comment: Comment) {
+        self.init(
+            id: comment.id ?? nil,
+            postID: comment.$post.id,
+            authorID: comment.$author.id,
+            content: comment.content,
+            createdAt: comment.createdAt ?? nil
+        )
+    }
     
+    func toModel() -> Comment {
+        let model = Comment()
+        model.$post.id = self.postID
+        model.$author.id = self.authorID
+        model.content = self.content
+        model.createdAt = self.createdAt
+        return model
+    }
 }

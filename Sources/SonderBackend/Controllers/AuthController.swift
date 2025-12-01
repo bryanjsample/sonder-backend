@@ -8,6 +8,7 @@
 import Vapor
 import Fluent
 import ImperialGoogle
+import SonderDTOs
 
 struct AuthController: RouteCollection {
     
@@ -34,8 +35,8 @@ struct AuthController: RouteCollection {
         
     }
     
-    func processGoogleUser(req: Request) async throws -> UserTokenDTO {
-        func retrieveUserToken(_ user: User) async throws -> UserTokenDTO {
+    func processGoogleUser(req: Request) async throws -> Response {
+        func retrieveUserToken(_ user: User) async throws -> Response {
             
             /* NEED TO:
              ADD TOKEN LIFETIMES
@@ -44,12 +45,13 @@ struct AuthController: RouteCollection {
              */
             
             if let token = try await user.$token.query(on: req.db).first() {
-                return UserTokenDTO(from: token)
+                let dto = UserTokenDTO(from: token)
+                return try helper.sendResponseObject(dto: dto)
             } else {
                 throw Abort(.unauthorized, reason: "User doesnt have a registered token")
             }
         }
-        func onboardNewUser() async throws -> UserTokenDTO {
+        func onboardNewUser() async throws -> Response {
             let newUser = try User(
                 email: userInfo.email,
                 firstName: userInfo.given_name,
@@ -60,7 +62,8 @@ struct AuthController: RouteCollection {
             try await newUser.save(on: req.db)
             let token = try newUser.generateToken()
             try await token.save(on: req.db)
-            return UserTokenDTO(from: token)
+            let dto = UserTokenDTO(from: token)
+            return try helper.sendResponseObject(dto: dto)
         }
         let userInfo = try req.query.decode(Google.GoogleUserInfo.self)
         if let existingUser = try await User.query(on: req.db)

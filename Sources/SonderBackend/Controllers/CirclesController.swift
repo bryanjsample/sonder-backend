@@ -7,6 +7,7 @@
 
 import Vapor
 import Fluent
+import SonderDTOs
 
 struct CirclesController: RouteCollection {
     
@@ -35,7 +36,7 @@ struct CirclesController: RouteCollection {
         }
     }
     
-    func createCircle(req: Request) async throws -> CircleDTO {
+    func createCircle(req: Request) async throws -> Response {
         // authenticate user on request
         let _ = try req.auth.require(User.self)
         
@@ -48,19 +49,21 @@ struct CirclesController: RouteCollection {
             throw Abort(.badRequest, reason: "Circle already exists")
         } else {
             try await circle.save(on: req.db)
-            return CircleDTO(from: circle)
+            let dto = CircleDTO(from: circle)
+            return try helper.sendResponseObject(dto: dto)
         }
     }
     
-    func retrieve(req: Request) async throws -> CircleDTO {
+    func retrieve(req: Request) async throws -> Response {
         // authenticate user on request
         let _ = try req.auth.require(User.self)
         
         let circle = try await helper.getCircle(req: req)
-        return CircleDTO(from: circle)
+        let dto = CircleDTO(from: circle)
+        return try helper.sendResponseObject(dto: dto)
     }
     
-    func edit(req: Request) async throws -> CircleDTO {
+    func edit(req: Request) async throws -> Response {
         func transferFields(_ dto: CircleDTO, _ circle: Circle) {
             circle.name = dto.name
             circle.description = dto.description
@@ -80,7 +83,8 @@ struct CirclesController: RouteCollection {
 
         try await circle.update(on: req.db)
 
-        return CircleDTO(from: circle)
+        let resDTO = CircleDTO(from: circle)
+        return try helper.sendResponseObject(dto: resDTO)
     }
     
     func remove(req: Request) async throws -> Response {
@@ -92,17 +96,18 @@ struct CirclesController: RouteCollection {
         return Response(status: .ok, body: .init(stringLiteral: "Circle was removed from database"))
     }
     
-    func retrieveUsers(req: Request) async throws  -> [UserDTO] {
+    func retrieveUsers(req: Request) async throws  -> Response {
         // authenticate user on request
         let _ = try req.auth.require(User.self)
         
         let circle = try await helper.getCircle(req: req)
         
-        return try await circle.$users.query(on: req.db).all()
+        let userDTOs = try await circle.$users.query(on: req.db).all()
             .map { UserDTO(from: $0) }
+        return try helper.sendResponseObject(dto: userDTOs)
     }
     
-    func retrieveFeed(req: Request) async throws -> FeedResponseDTO {
+    func retrieveFeed(req: Request) async throws -> Response {
         // authenticate user on request
         let _ = try req.auth.require(User.self)
         
@@ -126,8 +131,28 @@ struct CirclesController: RouteCollection {
         let eventDTOs = events.map { FeedItemDTO.event(CalendarEventDTO(from: $0)) }
         let merged = (postDTOs + eventDTOs).sorted { $0.createdAt! > $1.createdAt! }
 
-        return FeedResponseDTO(items: merged)
+        let dto = FeedResponseDTO(items: merged)
+        return try helper.sendResponseObject(dto: dto)
     }
     
 }
 
+extension CircleDTO {
+    init(from circle: Circle) {
+        self.init(
+            id: circle.id ?? nil,
+            name: circle.name,
+            description: circle.description,
+            pictureUrl: circle.pictureUrl ?? nil
+        )
+    }
+    
+    func toModel() -> Circle {
+        let model = Circle()
+        model.id = self.id ?? nil
+        model.name = self.name
+        model.description = self.description
+        model.pictureUrl = self.pictureUrl ?? nil
+        return model
+    }
+}

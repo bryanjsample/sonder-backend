@@ -40,5 +40,3 @@ extension UserToken: ModelTokenAuthenticatable {
     
     var isValid: Bool { true }
 }
-
-

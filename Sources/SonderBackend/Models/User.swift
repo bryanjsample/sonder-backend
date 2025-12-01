@@ -82,6 +82,8 @@ extension User {
     }
     
     func exists(on db: any Database) async throws -> Bool {
-        return try await User.find(self.id, on: db) != nil
+        try await User.find(self.id, on: db) != nil
     }
 }
+
+

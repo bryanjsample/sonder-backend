@@ -23,17 +23,17 @@ struct ControllerHelper {
         return circle
     }
     
-    func getUser(req: Request) async throws -> User {
-        let userIDParam = try req.parameters.require("userID")
-        // let userID = sanitizeAndValidate(param)
-        guard let userUUID = UUID(uuidString: userIDParam) else {
-            throw Abort(.badRequest, reason: "Invalid user ID")
-        }
-        guard let user = try await User.find(userUUID, on: req.db) else {
-            throw Abort(.notFound, reason: "User does not exist")
-        }
-        return user
-    }
+//    func getUser(req: Request) async throws -> User {
+//        let userIDParam = try req.parameters.require("userID")
+//        // let userID = sanitizeAndValidate(param)
+//        guard let userUUID = UUID(uuidString: userIDParam) else {
+//            throw Abort(.badRequest, reason: "Invalid user ID")
+//        }
+//        guard let user = try await User.find(userUUID, on: req.db) else {
+//            throw Abort(.notFound, reason: "User does not exist")
+//        }
+//        return user
+//    }
     
     func getPost(req: Request) async throws -> Post {
         let postIDParam = try req.parameters.require("postID")
@@ -66,5 +66,12 @@ struct ControllerHelper {
             throw Abort(.notFound, reason: "Comment does not exist")
         }
         return comment
+    }
+    
+    func sendResponseObject(dto: any Encodable, headerContent: String = "application/json; charset=utf-8") throws -> Response {
+        let body = try Response.Body(data: JSONEncoder().encode(dto))
+        let response = Response(status: .ok, body: body)
+        response.headers.replaceOrAdd(name: .contentType, value: headerContent)
+        return response
     }
 }

@@ -7,6 +7,7 @@
 
 import Vapor
 import Fluent
+import SonderDTOs
 
 struct PostsController: RouteCollection {
     
@@ -29,18 +30,19 @@ struct PostsController: RouteCollection {
     }
 
     
-    func retrieveCirclePosts(req: Request) async throws -> [PostDTO] {
+    func retrieveCirclePosts(req: Request) async throws -> Response {
         // authenticate user on request
         let _ = try req.auth.require(User.self)
         
         let circle = try await helper.getCircle(req: req)
         
-        return try await circle.$posts.query(on: req.db)
+        let postDTOs = try await circle.$posts.query(on: req.db)
             .all()
             .map { PostDTO(from: $0)}
+        return try helper.sendResponseObject(dto: postDTOs)
     }
     
-    func createPost(req: Request) async throws -> PostDTO {
+    func createPost(req: Request) async throws -> Response {
         // authenticate user on request
         let user = try req.auth.require(User.self)
         
@@ -58,21 +60,23 @@ struct PostsController: RouteCollection {
             throw Abort(.badRequest, reason: "Post already exists")
         } else {
             try await post.save(on: req.db)
-            return PostDTO(from: post)
+            let dto = PostDTO(from: post)
+            return try helper.sendResponseObject(dto: dto)
         }
     }
     
-    func retrievePost(req: Request) async throws -> PostDTO {
+    func retrievePost(req: Request) async throws -> Response {
         // authenticate user on request
         let _ = try req.auth.require(User.self)
         
         let _ = try await helper.getCircle(req: req)
         let post = try await helper.getPost(req: req)
         
-        return PostDTO(from: post)
+        let dto = PostDTO(from: post)
+        return try helper.sendResponseObject(dto: dto)
     }
     
-    func editPost(req: Request) async throws -> PostDTO {
+    func editPost(req: Request) async throws -> Response {
         func transferFields(_ dto: PostDTO, _ post: Post) {
             post.content = dto.content
         }
@@ -90,7 +94,8 @@ struct PostsController: RouteCollection {
         
         try await post.update(on: req.db)
         
-        return PostDTO(from: post)
+        let resDTO = PostDTO(from: post)
+        return try helper.sendResponseObject(dto: resDTO)
         
         
     }
@@ -105,4 +110,26 @@ struct PostsController: RouteCollection {
         return Response(status: .ok, body: .init(stringLiteral: "Post was removed from the database"))
     }
 
+}
+
+extension PostDTO {
+    init(from post: Post) {
+        self.init(
+            id: post.id ?? nil,
+            circleID: post.$circle.id,
+            authorID: post.$author.id,
+            content: post.content,
+            createdAt: post.createdAt ?? nil
+        )
+    }
+    
+    func toModel() -> Post {
+        let model = Post()
+        model.id = self.id
+        model.$circle.id = self.circleID
+        model.$author.id = self.authorID
+        model.content = self.content
+        model.createdAt = self.createdAt
+        return model
+    }
 }

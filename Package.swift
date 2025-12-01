@@ -16,7 +16,9 @@ let package = Package(
         // 🔵 Non-blocking, event-driven networking for Swift. Used for custom executors
         .package(url: "https://github.com/apple/swift-nio.git", from: "2.65.0"),
         // 🔐 Federated Authentication with OAuth providers for Vapor
-        .package(url: "https://github.com/vapor-community/Imperial.git", from: "2.0.0")
+        .package(url: "https://github.com/vapor-community/Imperial.git", from: "2.0.0"),
+        // 📀 Data Transfer Objects to interacts with both ends
+        .package(name: "SonderDTOs", path: "../SonderDTOs")
     ],
     targets: [
         .executableTarget(
@@ -27,7 +29,9 @@ let package = Package(
                 .product(name: "Vapor", package: "vapor"),
                 .product(name: "NIOCore", package: "swift-nio"),
                 .product(name: "NIOPosix", package: "swift-nio"),
-                .product(name: "ImperialGoogle", package: "imperial")            ],
+                .product(name: "ImperialGoogle", package: "imperial"),
+                .product(name: "SonderDTOs", package: "SonderDTOs")
+            ],
             swiftSettings: swiftSettings
         ),
         .testTarget(

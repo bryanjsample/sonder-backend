@@ -55,6 +55,6 @@ final class Post: Model, @unchecked Sendable {
 
 extension Post {
     func exists(on db: any Database) async throws -> Bool {
-        return try await Post.find(self.id, on: db) != nil
+        try await Post.find(self.id, on: db) != nil
     }
 }
