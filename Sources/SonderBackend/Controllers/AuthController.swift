@@ -29,7 +29,7 @@ struct AuthController: RouteCollection {
             authenticate: "auth/google",
             callback: googleCallbackURL,
             scope: ["profile", "email"]
-        ) { req, accToken in
+        ) { req, _ in
             let userInfo = try await Google.getUser(on: req)
             let query = try URLEncodedFormEncoder().encode(userInfo)
             return req.redirect(to: "/auth/google/success?\(query)")
@@ -62,8 +62,8 @@ struct AuthController: RouteCollection {
         func onboardNewUser() async throws -> Response {
             let newUser = try User(
                 email: userInfo.email,
-                firstName: userInfo.given_name,
-                lastName: userInfo.family_name,
+                firstName: userInfo.givenName,
+                lastName: userInfo.familyName,
                 pictureUrl: userInfo.picture,
 
             )
@@ -73,11 +73,10 @@ struct AuthController: RouteCollection {
             let dto = UserTokenDTO(from: token)
             return try helper.sendResponseObject(dto: dto)
         }
-        let userInfo = try req.query.decode(Google.GoogleUserInfo.self)
+        let userInfo = try req.query.decode(GoogleUserInfo.self)
         if let existingUser = try await User.query(on: req.db)
             .filter(\.$email == userInfo.email)
-            .first()
-        {
+            .first() {
             return try await retrieveUserToken(existingUser)
         } else {
             return try await onboardNewUser()
@@ -95,16 +94,24 @@ extension AuthController {
     }
 }
 
-extension Google {
-    struct GoogleUserInfo: Content {
-        let email: String
-        let email_verified: Bool
-        let given_name: String
-        let family_name: String
-        let picture: String?
-    }
+struct GoogleUserInfo: Content {
+    let email: String
+    let emailVerified: Bool
+    let givenName: String
+    let familyName: String
+    let picture: String?
 
-    static func getUser(on req: Request) async throws -> Google.GoogleUserInfo {
+    enum CodingKeys: String, CodingKey {
+        case email
+        case emailVerified = "email_verified"
+        case givenName = "given_name"
+        case familyName = "family_name"
+        case picture
+    }
+}
+
+extension Google {
+    static func getUser(on req: Request) async throws -> GoogleUserInfo {
         var headers = HTTPHeaders()
         headers.bearerAuthorization = try BearerAuthorization(
             token: req.accessToken
@@ -125,7 +132,7 @@ extension Google {
 
         let googInfo = try response.content.decode(GoogleUserInfo.self)
 
-        if googInfo.email_verified {
+        if googInfo.emailVerified {
             req.logger.info("email is verified")
             return googInfo
         } else {

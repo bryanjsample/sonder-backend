@@ -7,6 +7,8 @@ let package = Package(
         .macOS(.v13)
     ],
     dependencies: [
+        // 🧼 Linting and formatting.
+        .package(url: "https://github.com/SimplyDanny/SwiftLintPlugins", from: "0.62.2"),
         // 💧 A server-side Swift web framework.
         .package(url: "https://github.com/vapor/vapor.git", from: "4.115.0"),
         // 🗄 An ORM for SQL and NoSQL databases.
@@ -41,7 +43,10 @@ let package = Package(
                 .product(name: "ImperialGoogle", package: "imperial"),
                 .product(name: "SonderDTOs", package: "SonderDTOs"),
             ],
-            swiftSettings: swiftSettings
+            swiftSettings: swiftSettings,
+            plugins: [
+                .plugin(name: "SwiftLintBuildToolPlugin", package: "SwiftLintPlugins")
+            ]
         ),
         .testTarget(
             name: "SonderBackendTests",

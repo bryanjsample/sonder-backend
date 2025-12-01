@@ -45,7 +45,7 @@ final class Comment: Model, @unchecked Sendable {
 }
 
 extension Comment {
-    func exists(on db: any Database) async throws -> Bool {
-        try await SonderBackend.Comment.find(self.id, on: db) != nil
+    func exists(on database: any Database) async throws -> Bool {
+        try await SonderBackend.Comment.find(self.id, on: database) != nil
     }
 }

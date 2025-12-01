@@ -32,7 +32,7 @@ struct CalendarEventsController: RouteCollection {
 
     func retrieveCircleEvents(req: Request) async throws -> Response {
         // authenticate user on request
-        let _ = try req.auth.require(User.self)
+        _ = try req.auth.require(User.self)
 
         let circle = try await helper.getCircle(req: req)
 
@@ -44,9 +44,9 @@ struct CalendarEventsController: RouteCollection {
 
     func retrieveEvent(req: Request) async throws -> Response {
         // authenticate user on request
-        let _ = try req.auth.require(User.self)
+        _ = try req.auth.require(User.self)
 
-        let _ = try await helper.getCircle(req: req)
+        _ = try await helper.getCircle(req: req)
         let calendarEvent = try await helper.getCalendarEvent(req: req)
 
         let dto = CalendarEventDTO(from: calendarEvent)
@@ -83,9 +83,9 @@ struct CalendarEventsController: RouteCollection {
             event.endTime = dto.endTime
         }
         // authenticate user on request
-        let _ = try req.auth.require(User.self)
+        _ = try req.auth.require(User.self)
 
-        let _ = try await helper.getCircle(req: req)
+        _ = try await helper.getCircle(req: req)
         let calendarEvent = try await helper.getCalendarEvent(req: req)
         let dto = try req.content.decode(CalendarEventDTO.self)
         let sanitizedDTO = try dto.validateAndSanitize()
@@ -97,9 +97,9 @@ struct CalendarEventsController: RouteCollection {
 
     func removeEvent(req: Request) async throws -> Response {
         // authenticate user on request
-        let _ = try req.auth.require(User.self)
+        _ = try req.auth.require(User.self)
 
-        let _ = try await helper.getCircle(req: req)
+        _ = try await helper.getCircle(req: req)
         let calendarEvent = try await helper.getCalendarEvent(req: req)
         try await calendarEvent.delete(on: req.db)
         return Response(

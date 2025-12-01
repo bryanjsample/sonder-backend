@@ -40,7 +40,7 @@ struct CirclesController: RouteCollection {
 
     func createCircle(req: Request) async throws -> Response {
         // authenticate user on request
-        let _ = try req.auth.require(User.self)
+        _ = try req.auth.require(User.self)
 
         let dto = try req.content.decode(CircleDTO.self)
         let sanitizedDTO = try dto.validateAndSanitize()
@@ -57,7 +57,7 @@ struct CirclesController: RouteCollection {
 
     func retrieve(req: Request) async throws -> Response {
         // authenticate user on request
-        let _ = try req.auth.require(User.self)
+        _ = try req.auth.require(User.self)
 
         let circle = try await helper.getCircle(req: req)
         let dto = CircleDTO(from: circle)
@@ -73,7 +73,7 @@ struct CirclesController: RouteCollection {
             }
         }
         // authenticate user on request
-        let _ = try req.auth.require(User.self)
+        _ = try req.auth.require(User.self)
 
         let circle = try await helper.getCircle(req: req)
 
@@ -90,7 +90,7 @@ struct CirclesController: RouteCollection {
 
     func remove(req: Request) async throws -> Response {
         // authenticate user on request
-        let _ = try req.auth.require(User.self)
+        _ = try req.auth.require(User.self)
 
         let circle = try await helper.getCircle(req: req)
         try await circle.delete(on: req.db)
@@ -102,7 +102,7 @@ struct CirclesController: RouteCollection {
 
     func retrieveUsers(req: Request) async throws -> Response {
         // authenticate user on request
-        let _ = try req.auth.require(User.self)
+        _ = try req.auth.require(User.self)
 
         let circle = try await helper.getCircle(req: req)
 
@@ -113,7 +113,7 @@ struct CirclesController: RouteCollection {
 
     func retrieveFeed(req: Request) async throws -> Response {
         // authenticate user on request
-        let _ = try req.auth.require(User.self)
+        _ = try req.auth.require(User.self)
 
         let circle = try await helper.getCircle(req: req)
 

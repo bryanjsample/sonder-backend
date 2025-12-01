@@ -32,7 +32,7 @@ struct PostsController: RouteCollection {
 
     func retrieveCirclePosts(req: Request) async throws -> Response {
         // authenticate user on request
-        let _ = try req.auth.require(User.self)
+        _ = try req.auth.require(User.self)
 
         let circle = try await helper.getCircle(req: req)
 
@@ -67,9 +67,9 @@ struct PostsController: RouteCollection {
 
     func retrievePost(req: Request) async throws -> Response {
         // authenticate user on request
-        let _ = try req.auth.require(User.self)
+        _ = try req.auth.require(User.self)
 
-        let _ = try await helper.getCircle(req: req)
+        _ = try await helper.getCircle(req: req)
         let post = try await helper.getPost(req: req)
 
         let dto = PostDTO(from: post)
@@ -81,9 +81,9 @@ struct PostsController: RouteCollection {
             post.content = dto.content
         }
         // authenticate user on request -- ENSURE CLIENT IS COMMENT AUTHOR
-        let _ = try req.auth.require(User.self)
+        _ = try req.auth.require(User.self)
 
-        let _ = try await helper.getCircle(req: req)
+        _ = try await helper.getCircle(req: req)
         let post = try await helper.getPost(req: req)
 
         let dto = try req.content.decode(PostDTO.self)
@@ -100,9 +100,9 @@ struct PostsController: RouteCollection {
 
     func removePost(req: Request) async throws -> Response {
         // authenticate user on request -- ENSURE CLIENT IS COMMENT AUTHOR
-        let _ = try req.auth.require(User.self)
+        _ = try req.auth.require(User.self)
 
-        let _ = try await helper.getCircle(req: req)
+        _ = try await helper.getCircle(req: req)
         let post = try await helper.getPost(req: req)
         try await post.delete(on: req.db)
         return Response(

@@ -37,10 +37,10 @@ struct CommentsController: RouteCollection {
 
     func retrieveAll(req: Request) async throws -> Response {
         // authenticate user on request
-        let _ = try req.auth.require(User.self)
+        _ = try req.auth.require(User.self)
 
         // confirm circle exists -- may be more efficient to send back boolean rather than object
-        let _ = try await helper.getCircle(req: req)
+        _ = try await helper.getCircle(req: req)
         // confirm post exists -- may be more efficient to send back boolean rather than object
         let post = try await helper.getPost(req: req)
 
@@ -55,7 +55,7 @@ struct CommentsController: RouteCollection {
         let user = try req.auth.require(User.self)
 
         // confirm circle exists -- may be more efficient to send back boolean rather than object
-        let _ = try await helper.getCircle(req: req)
+        _ = try await helper.getCircle(req: req)
         // confirm post exists -- may be more efficient to send back boolean rather than object
         let post = try await helper.getPost(req: req)
 
@@ -75,12 +75,12 @@ struct CommentsController: RouteCollection {
 
     func retrieve(req: Request) async throws -> Response {
         // authenticate user on request
-        let _ = try req.auth.require(User.self)
+        _ = try req.auth.require(User.self)
 
         // confirm circle exists -- may be more efficient to send back boolean rather than object
-        let _ = try await helper.getCircle(req: req)
+        _ = try await helper.getCircle(req: req)
         // confirm post exists -- may be more efficient to send back boolean rather than object
-        let _ = try await helper.getPost(req: req)
+        _ = try await helper.getPost(req: req)
 
         let comment = try await helper.getComment(req: req)
         let dto = CommentDTO(from: comment)
@@ -92,12 +92,12 @@ struct CommentsController: RouteCollection {
             comment.content = dto.content
         }
         // authenticate user on request -- CONFIRM THAT CLIENT REQUEST IS COMMENT OWNER
-        let _ = try req.auth.require(User.self)
+        _ = try req.auth.require(User.self)
 
         // confirm circle exists -- may be more efficient to send back boolean rather than object
-        let _ = try await helper.getCircle(req: req)
+        _ = try await helper.getCircle(req: req)
         // confirm post exists -- may be more efficient to send back boolean rather than object
-        let _ = try await helper.getPost(req: req)
+        _ = try await helper.getPost(req: req)
 
         let comment = try await helper.getComment(req: req)
         let dto = try req.content.decode(CommentDTO.self)
@@ -110,12 +110,12 @@ struct CommentsController: RouteCollection {
 
     func remove(req: Request) async throws -> Response {
         // authenticate user on request -- CONFIRM THAT CLIENT REQUEST IS COMMENT OWNER
-        let _ = try req.auth.require(User.self)
+        _ = try req.auth.require(User.self)
 
         // confirm circle exists -- may be more efficient to send back boolean rather than object
-        let _ = try await helper.getCircle(req: req)
+        _ = try await helper.getCircle(req: req)
         // confirm post exists -- may be more efficient to send back boolean rather than object
-        let _ = try await helper.getPost(req: req)
+        _ = try await helper.getPost(req: req)
 
         let comment = try await helper.getComment(req: req)
         try await comment.delete(on: req.db)

@@ -29,8 +29,8 @@ struct MeController: RouteCollection {
     }
 
     func retrieve(req: Request) async throws -> Response {
-        let me = try req.auth.require(User.self)
-        let dto = UserDTO(from: me)
+        let myself = try req.auth.require(User.self)
+        let dto = UserDTO(from: myself)
         return try helper.sendResponseObject(dto: dto)
     }
 
@@ -46,23 +46,23 @@ struct MeController: RouteCollection {
                 user.pictureUrl = pictureUrl
             }
         }
-        let me = try req.auth.require(User.self)
+        let myself = try req.auth.require(User.self)
 
         let dto = try req.content.decode(UserDTO.self)
         let sanitizedDTO = try dto.validateAndSanitize()
 
-        transferFields(sanitizedDTO, me)
+        transferFields(sanitizedDTO, myself)
 
-        try await me.update(on: req.db)
+        try await myself.update(on: req.db)
 
-        let resDTO = UserDTO(from: me)
+        let resDTO = UserDTO(from: myself)
         return try helper.sendResponseObject(dto: resDTO)
 
     }
 
     func remove(req: Request) async throws -> Response {
-        let me = try req.auth.require(User.self)
-        try await me.delete(on: req.db)
+        let myself = try req.auth.require(User.self)
+        try await myself.delete(on: req.db)
         return Response(
             status: .ok,
             body: .init(stringLiteral: "User was removed from database")
@@ -73,9 +73,9 @@ struct MeController: RouteCollection {
 
         // parse query parameters such as circle= role= from=&to= page=1&per=20
 
-        let user = try req.auth.require(User.self)
+        let myself = try req.auth.require(User.self)
         let eventDTOs = try await CalendarEvent.query(on: req.db)
-            .filter(\.$host.$id == user.requireID())
+            .filter(\.$host.$id == myself.requireID())
             .all()
             .map { CalendarEventDTO(from: $0) }
         return try helper.sendResponseObject(dto: eventDTOs)
@@ -85,9 +85,9 @@ struct MeController: RouteCollection {
 
         // parse query parameters to reduce runtime query speed
 
-        let user = try req.auth.require(User.self)
+        let myself = try req.auth.require(User.self)
         let postDTOs = try await Post.query(on: req.db)
-            .filter(\.$author.$id == user.requireID())
+            .filter(\.$author.$id == myself.requireID())
             .all()
             .map { PostDTO(from: $0) }
         return try helper.sendResponseObject(dto: postDTOs)
