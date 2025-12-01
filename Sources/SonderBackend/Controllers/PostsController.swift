@@ -18,7 +18,7 @@ struct PostsController: RouteCollection {
 
     func boot(routes: any RoutesBuilder) throws {
         let postsProtected = routes.grouped("circles", ":circleID", "posts")
-            .grouped(UserToken.authenticator())
+            .grouped(AccessToken.authenticator())
 
         postsProtected.get(use: retrieveCirclePosts)
         postsProtected.post(use: createPost)

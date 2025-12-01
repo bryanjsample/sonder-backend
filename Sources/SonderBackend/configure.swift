@@ -32,7 +32,7 @@ public func configure(_ app: Application) async throws {
     //    }
     app.migrations.add(CreateCircle())
     app.migrations.add(CreateUser())
-    app.migrations.add(CreateUserToken())
+    app.migrations.add(CreateAccessToken())
     app.migrations.add(CreateCalendarEvent())
     app.migrations.add(CreatePost())
     app.migrations.add(CreateComment())

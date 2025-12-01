@@ -1,5 +1,5 @@
 //
-//  UserToken.swift
+//  AccessToken.swift
 //  SonderBackend
 //
 //  Created by Bryan Sample on 11/24/25.
@@ -9,7 +9,7 @@ import Fluent
 import Foundation
 import Vapor
 
-final class UserToken: Model, @unchecked Sendable {
+final class AccessToken: Model, @unchecked Sendable {
     static let schema = "user_tokens"
 
     @ID(key: .id)
@@ -34,9 +34,9 @@ final class UserToken: Model, @unchecked Sendable {
     }
 }
 
-extension UserToken: ModelTokenAuthenticatable {
-    static var valueKey: KeyPath<UserToken, Field<String>> { \.$value }
-    static var userKey: KeyPath<UserToken, Parent<User>> { \.$owner }
+extension AccessToken: ModelTokenAuthenticatable {
+    static var valueKey: KeyPath<AccessToken, Field<String>> { \.$value }
+    static var userKey: KeyPath<AccessToken, Parent<User>> { \.$owner }
 
     var isValid: Bool { true }
 }

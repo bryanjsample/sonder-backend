@@ -17,7 +17,7 @@ struct CalendarEventsController: RouteCollection {
 
     func boot(routes: any RoutesBuilder) throws {
         let eventsProtected = routes.grouped("circles", ":circleID", "events")
-            .grouped(UserToken.authenticator())
+            .grouped(AccessToken.authenticator())
 
         eventsProtected.get(use: retrieveCircleEvents)
         eventsProtected.post(use: createEvent)

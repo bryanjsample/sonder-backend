@@ -50,7 +50,7 @@ struct AuthController: RouteCollection {
              */
 
             if let token = try await user.$token.query(on: req.db).first() {
-                let dto = UserTokenDTO(from: token)
+                let dto = AccessTokenDTO(from: token)
                 return try helper.sendResponseObject(dto: dto)
             } else {
                 throw Abort(
@@ -70,7 +70,7 @@ struct AuthController: RouteCollection {
             try await newUser.save(on: req.db)
             let token = try newUser.generateToken()
             try await token.save(on: req.db)
-            let dto = UserTokenDTO(from: token)
+            let dto = AccessTokenDTO(from: token)
             return try helper.sendResponseObject(dto: dto)
         }
         let userInfo = try req.query.decode(GoogleUserInfo.self)

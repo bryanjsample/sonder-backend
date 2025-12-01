@@ -19,7 +19,7 @@ final class User: Model, @unchecked Sendable, Authenticatable {
     var circle: Circle?
 
     @OptionalChild(for: \.$owner)
-    var token: UserToken?
+    var token: AccessToken?
 
     @Children(for: \.$author)
     var posts: [Post]
@@ -74,7 +74,7 @@ final class User: Model, @unchecked Sendable, Authenticatable {
 }
 
 extension User {
-    func generateToken() throws -> UserToken {
+    func generateToken() throws -> AccessToken {
         try .init(
             value: [UInt8].random(count: 16).base64,
             userID: self.requireID()
