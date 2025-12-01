@@ -15,7 +15,7 @@ struct MeController: RouteCollection {
 
     func boot(routes: any RoutesBuilder) throws {
         let meProtected = routes.grouped("me").grouped(
-            UserToken.authenticator()
+            AccessToken.authenticator()
         )
 
         meProtected.get(use: retrieve)
@@ -127,11 +127,24 @@ extension UserDTO {
     }
 }
 
-extension UserTokenDTO {
-    init(from token: UserToken) {
+extension AccessTokenDTO {
+    init(from access: AccessToken) {
         self.init(
-            value: token.value,
-            ownerID: token.$owner.id
+            value: access.token,
+            ownerID: access.$owner.id,
+            expiresAt: access.expiresAt,
+            revoked: access.revoked
+        )
+    }
+}
+
+extension RefreshTokenDTO {
+    init(from refresh: RefreshToken) {
+        self.init(
+            value: refresh.token,
+            ownerID: refresh.$owner.id,
+            expiresAt: refresh.expiresAt,
+            revoked: refresh.revoked
         )
     }
 }

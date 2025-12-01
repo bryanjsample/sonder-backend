@@ -23,7 +23,7 @@ struct CommentsController: RouteCollection {
             "posts",
             ":postID",
             "comments"
-        ).grouped(UserToken.authenticator())
+        ).grouped(AccessToken.authenticator())
 
         commentsProtected.get(use: retrieveAll)
         commentsProtected.post(use: createComment)
