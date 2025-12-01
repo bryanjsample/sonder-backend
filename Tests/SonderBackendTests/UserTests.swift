@@ -5,17 +5,20 @@
 //  Created by Test Generator on 11/20/25.
 //
 
-@testable import SonderBackend
-import VaporTesting
-import Testing
 import Fluent
+import Testing
+import VaporTesting
+
+@testable import SonderBackend
 
 @Suite("User Endpoint Tests", .serialized)
 struct UserTests {
-    
+
     let helper = TestHelpers()
-    
-    private func withApp(_ test: (Application) async throws -> ()) async throws {
+
+    private func withApp(_ test: (Application) async throws -> Void)
+        async throws
+    {
         let app = try await Application.make(.testing)
         do {
             try await configure(app)
@@ -44,11 +47,15 @@ struct UserTests {
             let email = "user_\(UUID().uuidString)@example.com"
             let user = try await helper.createUser(app: app, email: email)
 
-            try await app.test(.GET, "\(helper.usersRoute)/\(try #require(user.id).uuidString)", afterResponse: { res in
-                #expect(res.status == .ok)
-                // Optionally decode to ensure DTO shape is correct:
-                _ = try res.content.decode(UserDTO.self)
-            })
+            try await app.test(
+                .GET,
+                "\(helper.usersRoute)/\(try #require(user.id).uuidString)",
+                afterResponse: { res in
+                    #expect(res.status == .ok)
+                    // Optionally decode to ensure DTO shape is correct:
+                    _ = try res.content.decode(UserDTO.self)
+                }
+            )
         }
     }
 
@@ -69,17 +76,33 @@ struct UserTests {
             dto.firstName = "UpdatedFirst"
             dto.lastName = "UpdatedLast"
             dto.username = "updated_\(UUID().uuidString.prefix(6))"
-            dto.pictureUrl = "https://cdn.example.com/avatars/\(UUID().uuidString).png"
+            dto.pictureUrl =
+                "https://cdn.example.com/avatars/\(UUID().uuidString).png"
 
-            try await app.test(.PATCH, "\(helper.usersRoute)/\(userID.uuidString)", beforeRequest: { req in
-                try req.content.encode(dto)
-            }, afterResponse: { res in
-                #expect(res.status == .ok)
-                // Optionally decode and verify fields round-trip:
-                let updated = try res.content.decode(UserDTO.self)
-                #expect(updated.firstName == SonderBackend.InputSanitizer.sanitizeName(dto.firstName))
-                #expect(updated.lastName == SonderBackend.InputSanitizer.sanitizeName(dto.lastName))
-            })
+            try await app.test(
+                .PATCH,
+                "\(helper.usersRoute)/\(userID.uuidString)",
+                beforeRequest: { req in
+                    try req.content.encode(dto)
+                },
+                afterResponse: { res in
+                    #expect(res.status == .ok)
+                    // Optionally decode and verify fields round-trip:
+                    let updated = try res.content.decode(UserDTO.self)
+                    #expect(
+                        updated.firstName
+                            == SonderBackend.InputSanitizer.sanitizeName(
+                                dto.firstName
+                            )
+                    )
+                    #expect(
+                        updated.lastName
+                            == SonderBackend.InputSanitizer.sanitizeName(
+                                dto.lastName
+                            )
+                    )
+                }
+            )
         }
     }
 
@@ -89,21 +112,33 @@ struct UserTests {
             let email = "user_\(UUID().uuidString)@example.com"
             let user = try await helper.createUser(app: app, email: email)
 
-            try await app.test(.DELETE, "\(helper.usersRoute)/\(try #require(user.id).uuidString)", afterResponse: { res in
-                #expect(res.status == .ok)
-            })
+            try await app.test(
+                .DELETE,
+                "\(helper.usersRoute)/\(try #require(user.id).uuidString)",
+                afterResponse: { res in
+                    #expect(res.status == .ok)
+                }
+            )
         }
     }
 }
 
-private extension Application {
+extension Application {
     // Helper to GET and decode a DTO in tests
-    func getResponse<T: Decodable>(method: HTTPMethod, path: String, as type: T.Type) async throws -> T {
+    fileprivate func getResponse<T: Decodable>(
+        method: HTTPMethod,
+        path: String,
+        as type: T.Type
+    ) async throws -> T {
         var decoded: T!
-        try await self.test(method, path, afterResponse: { res in
-            #expect(res.status == .ok)
-            decoded = try res.content.decode(T.self)
-        })
+        try await self.test(
+            method,
+            path,
+            afterResponse: { res in
+                #expect(res.status == .ok)
+                decoded = try res.content.decode(T.self)
+            }
+        )
         return decoded
     }
 }

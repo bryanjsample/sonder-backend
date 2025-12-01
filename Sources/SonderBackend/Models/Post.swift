@@ -10,34 +10,33 @@ import Foundation
 
 final class Post: Model, @unchecked Sendable {
     static let schema = "posts"
-    
+
     @ID(key: .id)
     var id: UUID?
-    
+
     @Parent(key: "circle_id")
     var circle: Circle
-    
+
     @Parent(key: "author_id")
     var author: User
-    
+
     @Children(for: \.$post)
     var comments: [Comment]
-    
+
     @Field(key: "content")
     var content: String
-    
-//    @Field(key: "attachments")         best way to store a number of attachments? mainly pictures
-//    var attachments: [Data]
-    
+
+    //    @Field(key: "attachments")         best way to store a number of attachments? mainly pictures
+    //    var attachments: [Data]
+
     @Timestamp(key: "created_at", on: .create)
     var createdAt: Date?
-    
+
     @Timestamp(key: "last_modified", on: .update)
     var lastModified: Date?
 
-    
-    init() { }
-    
+    init() {}
+
     init(
         id: UUID? = nil,
         circle: Circle,

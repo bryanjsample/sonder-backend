@@ -5,17 +5,20 @@
 //  Created by Test Generator on 11/20/25.
 //
 
-@testable import SonderBackend
-import VaporTesting
-import Testing
 import Fluent
+import Testing
+import VaporTesting
+
+@testable import SonderBackend
 
 @Suite("Calendar Event Endpoint Tests", .serialized)
 struct CalendarEventTests {
-    
+
     let helper = TestHelpers()
-    
-    private func withApp(_ test: (Application) async throws -> ()) async throws {
+
+    private func withApp(_ test: (Application) async throws -> Void)
+        async throws
+    {
         let app = try await Application.make(.testing)
         do {
             try await configure(app)
@@ -29,7 +32,6 @@ struct CalendarEventTests {
         }
         try await app.asyncShutdown()
     }
-
 
     // MARK: - Tests per endpoint
 
@@ -46,12 +48,16 @@ struct CalendarEventTests {
     func testRetrieveCircleEvents() async throws {
         try await withApp { app in
             let title = "List Event \(UUID().uuidString.prefix(6))"
-            
+
             let evt = try await helper.createEvent(app: app, title: title)
 
-            try await app.test(.GET, "\(helper.circlesRoute)/\(evt.$circle.id.uuidString)/\(helper.eventsSegment)", afterResponse: { res in
-                #expect(res.status == .ok)
-            })
+            try await app.test(
+                .GET,
+                "\(helper.circlesRoute)/\(evt.$circle.id.uuidString)/\(helper.eventsSegment)",
+                afterResponse: { res in
+                    #expect(res.status == .ok)
+                }
+            )
         }
     }
 
@@ -61,9 +67,13 @@ struct CalendarEventTests {
             let title = "User Event \(UUID().uuidString.prefix(6))"
             let evt = try await helper.createEvent(app: app, title: title)
 
-            try await app.test(.GET, "\(helper.circlesRoute)/\(evt.$circle.id.uuidString)/\(helper.eventsSegment)/user/\(evt.$host.id.uuidString)", afterResponse: { res in
-                #expect(res.status == .ok)
-            })
+            try await app.test(
+                .GET,
+                "\(helper.circlesRoute)/\(evt.$circle.id.uuidString)/\(helper.eventsSegment)/user/\(evt.$host.id.uuidString)",
+                afterResponse: { res in
+                    #expect(res.status == .ok)
+                }
+            )
         }
     }
 
@@ -73,9 +83,13 @@ struct CalendarEventTests {
             let title = "Get Event \(UUID().uuidString.prefix(6))"
             let evt = try await helper.createEvent(app: app, title: title)
 
-            try await app.test(.GET, "\(helper.circlesRoute)/\(evt.$circle.id.uuidString)/\(helper.eventsSegment)/\(evt.id!.uuidString)", afterResponse: { res in
-                #expect(res.status == .ok)
-            })
+            try await app.test(
+                .GET,
+                "\(helper.circlesRoute)/\(evt.$circle.id.uuidString)/\(helper.eventsSegment)/\(evt.id!.uuidString)",
+                afterResponse: { res in
+                    #expect(res.status == .ok)
+                }
+            )
         }
     }
 
@@ -88,18 +102,24 @@ struct CalendarEventTests {
             // Fetch DTO first to preserve required fields (host/circle)
             var dto = try await app.getResponse(
                 method: .GET,
-                path: "\(helper.circlesRoute)/\(evt.$circle.id.uuidString)/\(helper.eventsSegment)/\(evt.id!.uuidString)",
+                path:
+                    "\(helper.circlesRoute)/\(evt.$circle.id.uuidString)/\(helper.eventsSegment)/\(evt.id!.uuidString)",
                 as: CalendarEventDTO.self
             )
             dto.title = dto.title + " (Edited)"
             dto.description = "Updated description"
             // Keep start/end as-is or adjust as desired
 
-            try await app.test(.PATCH, "\(helper.circlesRoute)/\(evt.$circle.id.uuidString)/\(helper.eventsSegment)/\(evt.id!.uuidString)", beforeRequest: { req in
-                try req.content.encode(dto)
-            }, afterResponse: { res in
-                #expect(res.status == .ok)
-            })
+            try await app.test(
+                .PATCH,
+                "\(helper.circlesRoute)/\(evt.$circle.id.uuidString)/\(helper.eventsSegment)/\(evt.id!.uuidString)",
+                beforeRequest: { req in
+                    try req.content.encode(dto)
+                },
+                afterResponse: { res in
+                    #expect(res.status == .ok)
+                }
+            )
         }
     }
 
@@ -109,21 +129,32 @@ struct CalendarEventTests {
             let title = "Delete Event \(UUID().uuidString.prefix(6))"
             let evt = try await helper.createEvent(app: app, title: title)
 
-            try await app.test(.DELETE, "\(helper.circlesRoute)/\(evt.$circle.id.uuidString)/\(helper.eventsSegment)/\(evt.id!.uuidString)", afterResponse: { res in
-                #expect(res.status == .ok)
-            })
+            try await app.test(
+                .DELETE,
+                "\(helper.circlesRoute)/\(evt.$circle.id.uuidString)/\(helper.eventsSegment)/\(evt.id!.uuidString)",
+                afterResponse: { res in
+                    #expect(res.status == .ok)
+                }
+            )
         }
     }
 }
 
-private extension Application {
-    func getResponse<T: Decodable>(method: HTTPMethod, path: String, as type: T.Type) async throws -> T {
+extension Application {
+    fileprivate func getResponse<T: Decodable>(
+        method: HTTPMethod,
+        path: String,
+        as type: T.Type
+    ) async throws -> T {
         var decoded: T!
-        try await self.test(method, path, afterResponse: { res in
-            #expect(res.status == .ok)
-            decoded = try res.content.decode(T.self)
-        })
+        try await self.test(
+            method,
+            path,
+            afterResponse: { res in
+                #expect(res.status == .ok)
+                decoded = try res.content.decode(T.self)
+            }
+        )
         return decoded
     }
 }
-

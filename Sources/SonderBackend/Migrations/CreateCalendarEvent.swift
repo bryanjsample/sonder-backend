@@ -21,7 +21,7 @@ struct CreateCalendarEvent: AsyncMigration {
             .field("last_modified", .datetime)
             .create()
     }
-    
+
     func revert(on database: any Database) async throws {
         try await database.schema("events").delete()
     }

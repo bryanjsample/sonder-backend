@@ -5,59 +5,60 @@
 //  Created by Bryan Sample on 11/13/25.
 //
 
-import Vapor
 import Fluent
 import SonderDTOs
+import Vapor
 
 struct CalendarEventsController: RouteCollection {
-    
+
     // VALIDATE USER CIRCLE RELATION
-    
+
     let helper = ControllerHelper()
-    
+
     func boot(routes: any RoutesBuilder) throws {
-        let eventsProtected = routes.grouped("circles", ":circleID", "events").grouped(UserToken.authenticator())
-        
+        let eventsProtected = routes.grouped("circles", ":circleID", "events")
+            .grouped(UserToken.authenticator())
+
         eventsProtected.get(use: retrieveCircleEvents)
         eventsProtected.post(use: createEvent)
-        
+
         eventsProtected.group(":eventID") { event in
             event.get(use: retrieveEvent)
             event.patch(use: editEvent)
             event.delete(use: removeEvent)
         }
-        
+
     }
-    
+
     func retrieveCircleEvents(req: Request) async throws -> Response {
         // authenticate user on request
         let _ = try req.auth.require(User.self)
-        
+
         let circle = try await helper.getCircle(req: req)
-        
+
         let eventDTOs = try await circle.$events.query(on: req.db)
             .all()
             .map { CalendarEventDTO(from: $0) }
         return try helper.sendResponseObject(dto: eventDTOs)
     }
-    
+
     func retrieveEvent(req: Request) async throws -> Response {
         // authenticate user on request
         let _ = try req.auth.require(User.self)
-        
+
         let _ = try await helper.getCircle(req: req)
         let calendarEvent = try await helper.getCalendarEvent(req: req)
-        
+
         let dto = CalendarEventDTO(from: calendarEvent)
         return try helper.sendResponseObject(dto: dto)
     }
-    
+
     func createEvent(req: Request) async throws -> Response {
         // authenticate user on request
         let user = try req.auth.require(User.self)
-        
+
         let circle = try await helper.getCircle(req: req)
-        
+
         var eventDTO = try req.content.decode(CalendarEventDTO.self)
         eventDTO.hostID = user.id!
         eventDTO.circleID = circle.id!
@@ -67,11 +68,11 @@ struct CalendarEventsController: RouteCollection {
             throw Abort(.conflict, reason: "Event already exists")
         } else {
             try await calendarEvent.save(on: req.db)
-            let dto =  CalendarEventDTO(from: calendarEvent)
+            let dto = CalendarEventDTO(from: calendarEvent)
             return try helper.sendResponseObject(dto: dto)
         }
     }
-    
+
     func editEvent(req: Request) async throws -> Response {
         func transferFields(_ dto: CalendarEventDTO, event: CalendarEvent) {
             event.$host.id = dto.hostID
@@ -83,7 +84,7 @@ struct CalendarEventsController: RouteCollection {
         }
         // authenticate user on request
         let _ = try req.auth.require(User.self)
-        
+
         let _ = try await helper.getCircle(req: req)
         let calendarEvent = try await helper.getCalendarEvent(req: req)
         let dto = try req.content.decode(CalendarEventDTO.self)
@@ -93,20 +94,23 @@ struct CalendarEventsController: RouteCollection {
         let resDTO = CalendarEventDTO(from: calendarEvent)
         return try helper.sendResponseObject(dto: resDTO)
     }
-    
+
     func removeEvent(req: Request) async throws -> Response {
         // authenticate user on request
         let _ = try req.auth.require(User.self)
-        
+
         let _ = try await helper.getCircle(req: req)
         let calendarEvent = try await helper.getCalendarEvent(req: req)
         try await calendarEvent.delete(on: req.db)
-        return Response(status: .ok, body: .init(stringLiteral: "Event was removed from the database"))
+        return Response(
+            status: .ok,
+            body: .init(stringLiteral: "Event was removed from the database")
+        )
     }
 }
 
 extension CalendarEventDTO {
-    
+
     func toModel() -> CalendarEvent {
         let model = CalendarEvent()
         model.id = self.id
@@ -119,7 +123,7 @@ extension CalendarEventDTO {
         model.createdAt = self.createdAt
         return model
     }
-    
+
     init(from event: CalendarEvent) {
         self.init(
             id: event.id,
@@ -132,6 +136,5 @@ extension CalendarEventDTO {
             createdAt: event.createdAt
         )
     }
-    
 
 }

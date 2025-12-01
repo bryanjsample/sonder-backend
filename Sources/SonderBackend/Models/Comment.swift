@@ -10,27 +10,27 @@ import Foundation
 
 final class Comment: Model, @unchecked Sendable {
     static let schema = "comments"
-    
+
     @ID(key: .id)
     var id: UUID?
-    
+
     @Parent(key: "post_id")
     var post: Post
-    
+
     @Parent(key: "author_id")
     var author: User
-    
+
     @Field(key: "content")
     var content: String
-    
+
     @Timestamp(key: "created_at", on: .create)
     var createdAt: Date?
-    
+
     @Timestamp(key: "last_modified", on: .update)
     var lastModified: Date?
-    
-    init() { }
-    
+
+    init() {}
+
     init(
         id: UUID? = nil,
         postID: Post,
