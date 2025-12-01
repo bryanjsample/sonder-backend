@@ -84,16 +84,6 @@ struct AuthController: RouteCollection {
     }
 }
 
-extension AuthController {
-    struct OAuthCallbackQuery: Content {
-        let code: String
-        let state: String?
-        let scope: String?
-        let authuser: String?
-        let prompt: String?
-    }
-}
-
 struct GoogleUserInfo: Content {
     let email: String
     let emailVerified: Bool
