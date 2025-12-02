@@ -35,14 +35,6 @@ struct CirclesController: RouteCollection {
         circlesProtected.group(":circleID", "feed") { circleFeed in
             circleFeed.get(use: retrieveFeed)
         }
-        
-        circlesProtected.group(":circleID", "posts") { circlePosts in
-            circlePosts.get(use: retrievePosts)
-        }
-        
-        circlesProtected.group(":circleID", "events") { circleEvents in
-            circleEvents.get(use: retrieveEvents)
-        }
     }
 
     func createCircle(req: Request) async throws -> Response {
@@ -129,45 +121,6 @@ struct CirclesController: RouteCollection {
         let userDTOs = try await circle.$users.query(on: req.db).all()
             .map { UserDTO(from: $0) }
         return try helper.sendResponseObject(dto: userDTOs)
-    }
-    
-    func retrievePosts(req: Request) async throws -> Response {
-        let user = try req.auth.require(User.self)
-        let circle = try await helper.getCircle(req: req)
-        
-        if !user.isCircleMember(circle) {
-            throw Abort(.unauthorized, reason: "User is not a member of requested circle.")
-        }
-
-        // ADD IN PAGINATION FUNCTIONALITY
-
-        let posts = try await Post.query(on: req.db)
-            .filter(\.$circle.$id == circle.id!)
-            .with(\.$circle)
-            .with(\.$author)
-            .all()
-        let postDTOs = posts.map { FeedItemDTO.post(PostDTO(from: $0)) }
-        let dto = FeedResponseDTO(items: postDTOs)
-        return try helper.sendResponseObject(dto: dto)
-    }
-    
-    func retrieveEvents(req: Request) async throws -> Response {
-        // authenticate user on request
-        let user = try req.auth.require(User.self)
-        let circle = try await helper.getCircle(req: req)
-        
-        if !user.isCircleMember(circle) {
-            throw Abort(.unauthorized, reason: "User is not a member of requested circle.")
-        }
-        
-        let events = try await CalendarEvent.query(on: req.db)
-            .filter(\.$circle.$id == circle.id!)
-            .with(\.$circle)
-            .with(\.$host)
-            .all()
-        let eventDTOs = events.map { FeedItemDTO.event(CalendarEventDTO(from: $0)) }
-        let dto = FeedResponseDTO(items: eventDTOs)
-        return try helper.sendResponseObject(dto: dto)
     }
 
     func retrieveFeed(req: Request) async throws -> Response {
