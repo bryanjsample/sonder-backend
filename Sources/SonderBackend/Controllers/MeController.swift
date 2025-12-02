@@ -24,6 +24,10 @@ struct MeController: RouteCollection {
         meProtected.group("events") { myEvents in
             myEvents.get(use: retrieveEvents)
         }
+        
+        meProtected.group("posts") { myPosts in
+            myPosts.get(use: retrievePosts)
+        }
 
     }
 
