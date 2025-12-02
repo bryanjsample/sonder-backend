@@ -1,5 +1,5 @@
 {
-  "originHash" : "91c824f3d750c30fc7ff19e76e128cc7530d2139119973eaabc64ae7571255d5",
+  "originHash" : "811afe6227649f4ad4835698dfd4028f85797ee1e2786f48b5198c204ef0516e",
   "pins" : [
     {
       "identity" : "async-http-client",
@@ -53,6 +53,24 @@
       "state" : {
         "revision" : "59bff45a41d1ece1950bb8a6e0006d88c1fb6e69",
         "version" : "2.12.0"
+      }
+    },
+    {
+      "identity" : "imperial",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/vapor-community/Imperial.git",
+      "state" : {
+        "revision" : "e1ecc8529dbf470c237f0ccfaa803b712a964cd0",
+        "version" : "2.2.0"
+      }
+    },
+    {
+      "identity" : "jwt-kit",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/vapor/jwt-kit.git",
+      "state" : {
+        "revision" : "b5f82fb9dc238f2fcac53d721a222513a152613c",
+        "version" : "5.3.0"
       }
     },
     {
@@ -287,6 +305,15 @@
       "state" : {
         "revision" : "395a77f0aa927f0ff73941d7ac35f2b46d47c9db",
         "version" : "1.6.3"
+      }
+    },
+    {
+      "identity" : "swiftlintplugins",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/SimplyDanny/SwiftLintPlugins",
+      "state" : {
+        "revision" : "ecafb5b056cb7995324f0d310a61f30661d00cad",
+        "version" : "0.62.2"
       }
     },
     {

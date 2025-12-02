@@ -5,85 +5,75 @@
 //  Created by Bryan Sample on 11/13/25.
 //
 
-import Vapor
 import Fluent
+import SonderDTOs
+import Vapor
 
 struct CalendarEventsController: RouteCollection {
-    
+
+    // VALIDATE USER CIRCLE RELATION
+
     let helper = ControllerHelper()
-    
+
     func boot(routes: any RoutesBuilder) throws {
-        let events = routes.grouped("circles", ":circleID", "events")
-        
-        events.get(use: retrieveCircleEvents)
-        
-        events.group(":eventID") { event in
+        let eventsProtected = routes.grouped("circles", ":circleID", "events")
+            .grouped(AccessToken.authenticator())
+
+        eventsProtected.get(use: retrieveCircleEvents)
+        eventsProtected.post(use: createEvent)
+
+        eventsProtected.group(":eventID") { event in
             event.get(use: retrieveEvent)
             event.patch(use: editEvent)
             event.delete(use: removeEvent)
         }
-        
-        events.group("user", ":userID") { userEvents in
-            userEvents.post(use: createEvent)
-            userEvents.get(use: retrieveUserEvents)
-        }
-        
+
     }
-    
-    func retrieveCircleEvents(req: Request) async throws -> [CalendarEventDTO] {
+
+    func retrieveCircleEvents(req: Request) async throws -> Response {
+        // authenticate user on request
+        _ = try req.auth.require(User.self)
+
         let circle = try await helper.getCircle(req: req)
-        
-        return try await circle.$events.query(on: req.db)
+
+        let eventDTOs = try await circle.$events.query(on: req.db)
             .all()
             .map { CalendarEventDTO(from: $0) }
+        return try helper.sendResponseObject(dto: eventDTOs)
     }
-    
-    func retrieveUserEvents(req: Request) async throws -> [CalendarEventDTO] {
-        let circle = try await helper.getCircle(req: req)
-        let user = try await helper.getUser(req: req)
-        
-        return try await circle.$events.query(on: req.db)
-            .filter(\.$host.$id == user.id!)
-            .all()
-            .map { CalendarEventDTO(from: $0) }
-    }
-    
-    func retrieveEvent(req: Request) async throws -> CalendarEventDTO {
-        let _ = try await helper.getCircle(req: req)
+
+    func retrieveEvent(req: Request) async throws -> Response {
+        // authenticate user on request
+        _ = try req.auth.require(User.self)
+
+        _ = try await helper.getCircle(req: req)
         let calendarEvent = try await helper.getCalendarEvent(req: req)
-        
-        return CalendarEventDTO(from: calendarEvent)
+
+        let dto = CalendarEventDTO(from: calendarEvent)
+        return try helper.sendResponseObject(dto: dto)
     }
-    
-    func createEvent(req: Request) async throws -> CalendarEventDTO {
-        let user = try await helper.getUser(req: req)
-        print("\n\n\nuser=\(user)\n\n\n")
+
+    func createEvent(req: Request) async throws -> Response {
+        // authenticate user on request
+        let user = try req.auth.require(User.self)
+
         let circle = try await helper.getCircle(req: req)
-        print("\n\n\ncircle=\(circle)\n\n\n")
+
         var eventDTO = try req.content.decode(CalendarEventDTO.self)
-        
-        print("\n\n\neventDTO=\(eventDTO)\n\n\n")
-        
         eventDTO.hostID = user.id!
         eventDTO.circleID = circle.id!
-        
-        print("\n\n\neventDTO=\(eventDTO)\n\n\n")
-        
-        let sanitizedDTO = try validateAndSanitize(eventDTO)
-        
-        print("\n\n\nsaniEventDTO=\(sanitizedDTO)\n\n\n")
-        
-        let calendarEvent = sanitizedDTO.toModel()    // error is occurring right here
-        
-        if try await eventExists(calendarEvent, on: req.db) {
-            throw Abort(.badRequest, reason: "Event already exists")
+        let sanitizedDTO = try eventDTO.validateAndSanitize()
+        let calendarEvent = sanitizedDTO.toModel()
+        if try await calendarEvent.exists(on: req.db) {
+            throw Abort(.conflict, reason: "Event already exists")
         } else {
             try await calendarEvent.save(on: req.db)
-            return CalendarEventDTO(from: calendarEvent)
+            let dto = CalendarEventDTO(from: calendarEvent)
+            return try helper.sendResponseObject(dto: dto)
         }
     }
-    
-    func editEvent(req: Request) async throws -> CalendarEventDTO {
+
+    func editEvent(req: Request) async throws -> Response {
         func transferFields(_ dto: CalendarEventDTO, event: CalendarEvent) {
             event.$host.id = dto.hostID
             event.$circle.id = dto.circleID
@@ -92,34 +82,59 @@ struct CalendarEventsController: RouteCollection {
             event.startTime = dto.startTime
             event.endTime = dto.endTime
         }
-        let _ = try await helper.getCircle(req: req)
+        // authenticate user on request
+        _ = try req.auth.require(User.self)
+
+        _ = try await helper.getCircle(req: req)
         let calendarEvent = try await helper.getCalendarEvent(req: req)
-        
         let dto = try req.content.decode(CalendarEventDTO.self)
-        let sanitizedDTO = try validateAndSanitize(dto)
-        
+        let sanitizedDTO = try dto.validateAndSanitize()
         transferFields(sanitizedDTO, event: calendarEvent)
-        
         try await calendarEvent.update(on: req.db)
-        
-        return CalendarEventDTO(from: calendarEvent)
+        let resDTO = CalendarEventDTO(from: calendarEvent)
+        return try helper.sendResponseObject(dto: resDTO)
     }
-    
+
     func removeEvent(req: Request) async throws -> Response {
-        let _ = try await helper.getCircle(req: req)
+        // authenticate user on request
+        _ = try req.auth.require(User.self)
+
+        _ = try await helper.getCircle(req: req)
         let calendarEvent = try await helper.getCalendarEvent(req: req)
         try await calendarEvent.delete(on: req.db)
-        return Response(status: .ok, body: .init(stringLiteral: "Event was removed from the database"))
+        return Response(
+            status: .ok,
+            body: .init(stringLiteral: "Event was removed from the database")
+        )
     }
-    
-    func eventExists(_ event: CalendarEvent, on db: any Database) async throws -> Bool {
-        return try await CalendarEvent.find(event.id, on: db) != nil
+}
+
+extension CalendarEventDTO {
+
+    func toModel() -> CalendarEvent {
+        let model = CalendarEvent()
+        model.id = self.id
+        model.$host.id = self.hostID
+        model.$circle.id = self.circleID
+        model.title = self.title
+        model.description = self.description
+        model.startTime = self.startTime
+        model.endTime = self.endTime
+        model.createdAt = self.createdAt
+        return model
     }
-    
-    func validateAndSanitize(_ eventDTO: CalendarEventDTO) throws -> CalendarEventDTO {
-        try InputValidator.validateEvent(eventDTO)
-        let sanitizedDTO = InputSanitizer.sanitizeEvent(eventDTO)
-        return sanitizedDTO
+
+    init(from event: CalendarEvent) {
+        self.init(
+            id: event.id,
+            hostID: event.$host.id,
+            circleID: event.$circle.id,
+            title: event.title,
+            description: event.description,
+            startTime: event.startTime,
+            endTime: event.endTime,
+            createdAt: event.createdAt
+        )
     }
-    
+
 }
