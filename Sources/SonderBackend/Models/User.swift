@@ -8,6 +8,7 @@
 import Fluent
 import Foundation
 import Vapor
+import SonderDTOs
 
 final class User: Model, @unchecked Sendable, Authenticatable {
     static let schema = "users"
@@ -98,8 +99,10 @@ extension Date {
 }
 
 extension User {
-    func generateAccessToken() throws -> AccessToken {
-        try .init(
+    
+    func generateAccessToken(req: Request) async throws -> AccessToken {
+        try await self.revokeAllAccessTokens(req: req)
+        return try .init(
             token: [UInt8].random(count: 16).base64,
             owner: self,
             expiresAt: Date.now.adding(hours: 1),
@@ -107,13 +110,71 @@ extension User {
         )
     }
     
-    func generateRefreshToken() throws -> RefreshToken {
-        try .init(
+    func generateRefreshToken(req: Request) async throws -> RefreshToken {
+        try await self.revokeAllRefreshTokens(req: req)
+        return try .init(
             token: [UInt8].random(count: 64).base64,
             owner: self,
             expiresAt: Date.now.adding(days: 60),
             revoked: false
         )
+    }
+    
+    func retrieveAccessToken(req: Request) async throws -> AccessToken? {
+        req.logger.info("inside retrieveAccessToken")
+        guard let accessToken = try await self.$accessTokens.query(on: req.db)
+            .filter(\.$revoked == false)
+            .first() else {
+            req.logger.info("User doesn't have a registered access token")
+            return nil
+        }
+        if accessToken.isValid {
+            return accessToken
+        } else {
+            accessToken.revoked = true
+            try await accessToken.update(on: req.db)
+            req.logger.info("access token is invalid, need to consult refresh token")
+            return nil
+        }
+    }
+    
+    func retrieveRefreshToken(req: Request) async throws -> RefreshToken? {
+        req.logger.info("inside retrieveRefreshToken")
+        guard let refreshToken = try await self.$refreshTokens.query(on: req.db)
+            .filter(\.$revoked == false)
+            .first() else {
+            req.logger.info("User doesn't have a registered refresh token.")
+            throw Abort.redirect(to: "/auth/google")
+        }
+        if refreshToken.isValid {
+            return refreshToken
+        } else {
+            refreshToken.revoked = true
+            try await refreshToken.update(on: req.db)
+            req.logger.info("refresh token is invalid, need to log back in")
+            throw Abort.redirect(to: "/auth/google")
+        }
+    }
+    
+    func revokeAllAccessTokens(req: Request) async throws {
+        let accessTokens = try await self.$accessTokens.query(on: req.db).all()
+        for token in accessTokens {
+            token.revoked = true
+            try await token.update(on: req.db)
+        }
+    }
+    
+    func revokeAllRefreshTokens(req: Request) async throws {
+        let refreshTokens = try await self.$refreshTokens.query(on: req.db).all()
+        for token in refreshTokens {
+            token.revoked = true
+            try await token.update(on: req.db)
+        }
+    }
+    
+    func revokeAllTokens(req: Request) async throws {
+        try await revokeAllAccessTokens(req: req)
+        try await revokeAllRefreshTokens(req: req)
     }
 
     func exists(on database: any Database) async throws -> Bool {

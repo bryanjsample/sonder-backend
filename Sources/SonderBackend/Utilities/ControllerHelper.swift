@@ -6,6 +6,7 @@
 //
 
 import Vapor
+import SonderDTOs
 
 struct ControllerHelper {
 

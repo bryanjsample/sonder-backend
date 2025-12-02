@@ -38,8 +38,8 @@ struct AuthController: RouteCollection {
         
         let auth = routes.grouped("auth")
         
-        auth.group("refresh") { login in
-            login.get(use: processRefreshToken)
+        auth.group("refresh") { refresh in
+            refresh.get(use: processRefreshToken)
         }
 
         auth.group("google", "success") { googleSuccess in
@@ -56,10 +56,14 @@ struct AuthController: RouteCollection {
             req.logger.info("Refresh token does not exist.")
             return req.redirect(to: "/auth/google")
         }
+        
+        let user = refreshToken.owner
+        
         if refreshToken.isValid {
-            let user = refreshToken.owner
-            // revoke all other tokens associate with user
-            let accessToken = try user.generateAccessToken()
+            req.logger.info("Refresh token is valid.")
+            try await user.revokeAllAccessTokens(req: req)
+            
+            let accessToken = try await user.generateAccessToken(req: req)
             try await accessToken.save(on: req.db)
             
             let accessDTO = AccessTokenDTO(from: accessToken)
@@ -68,6 +72,7 @@ struct AuthController: RouteCollection {
             return try helper.sendResponseObject(dto: resDTO)
         } else {
             req.logger.info("Refresh token is not valid.")
+            try await user.revokeAllTokens(req: req)
             return req.redirect(to: "/auth/google")
         }
     }
@@ -77,50 +82,18 @@ struct AuthController: RouteCollection {
         if let existingUser = try await User.query(on: req.db)
             .filter(\.$email == userInfo.email)
             .first() {
-            let accessToken = try await retrieveAccessToken(existingUser, req: req) ?? existingUser.generateAccessToken()
-            let refreshToken = try await retrieveRefreshToken(existingUser, req: req) ?? existingUser.generateRefreshToken()
+            let accessToken = try await existingUser.generateAccessToken(req: req)
+            try await accessToken.save(on: req.db)
             let accessDTO = AccessTokenDTO(from: accessToken)
+            
+            let refreshToken = try await existingUser.generateRefreshToken(req: req)
+            try await refreshToken.save(on: req.db)
             let refreshDTO = RefreshTokenDTO(from: refreshToken)
+            
             let resDTO = TokenResponseDTO(accessToken: accessDTO, refreshToken: refreshDTO)
             return try helper.sendResponseObject(dto: resDTO)
         } else {
             return try await onboardNewUser(req: req, userInfo: userInfo)
-        }
-    }
-    
-    func retrieveAccessToken(_ user: User, req: Request) async throws -> AccessToken? {
-        req.logger.info("inside retrieveAccessToken")
-        guard let accessToken = try await user.$accessTokens.query(on: req.db)
-            .filter(\.$revoked == false)
-            .first() else {
-            req.logger.info("User doesn't have a registered access token")
-            return nil
-        }
-        if accessToken.isValid {
-            return accessToken
-        } else {
-            accessToken.revoked = true
-            try await accessToken.update(on: req.db)
-            req.logger.info("access token is invalid, need to consult refresh token")
-            return nil
-        }
-    }
-    
-    func retrieveRefreshToken(_ user: User, req: Request) async throws -> RefreshToken? {
-        req.logger.info("inside retrieveRefreshToken")
-        guard let refreshToken = try await user.$refreshTokens.query(on: req.db)
-            .filter(\.$revoked == false)
-            .first() else {
-            req.logger.info("User doesn't have a registered refresh token.")
-            return nil
-        }
-        if refreshToken.isValid {
-            return refreshToken
-        } else {
-            refreshToken.revoked = true
-            try await refreshToken.update(on: req.db)
-            req.logger.info("refresh token is invalid, need to log back in")
-            return nil
         }
     }
     
@@ -134,11 +107,11 @@ struct AuthController: RouteCollection {
         )
         try await newUser.save(on: req.db)
         
-        let accessToken = try newUser.generateAccessToken()
+        let accessToken = try await newUser.generateAccessToken(req: req)
         try await accessToken.save(on: req.db)
         let accessDTO = AccessTokenDTO(from: accessToken)
         
-        let refreshToken = try newUser.generateRefreshToken()
+        let refreshToken = try await newUser.generateRefreshToken(req: req)
         try await refreshToken.save(on: req.db)
         let refreshDTO = RefreshTokenDTO(from: refreshToken)
         
@@ -148,7 +121,47 @@ struct AuthController: RouteCollection {
     
 }
 
-struct IncomingRefreshToken: Codable {
+extension AccessTokenDTO {
+    init(from access: AccessToken) {
+        self.init(
+            token: access.token,
+            ownerID: access.$owner.id,
+            expiresAt: access.expiresAt,
+            revoked: access.revoked
+        )
+    }
+    
+    func toModel() -> AccessToken {
+        let model = AccessToken()
+        model.token = self.token
+        model.$owner.id = self.ownerID
+        model.expiresAt = self.expiresAt
+        model.revoked = self.revoked
+        return model
+    }
+}
+
+extension RefreshTokenDTO {
+    init(from refresh: RefreshToken) {
+        self.init(
+            token: refresh.token,
+            ownerID: refresh.$owner.id,
+            expiresAt: refresh.expiresAt,
+            revoked: refresh.revoked
+        )
+    }
+    
+    func toModel() -> RefreshToken {
+        let model = RefreshToken()
+        model.token = self.token
+        model.$owner.id = self.ownerID
+        model.expiresAt = self.expiresAt
+        model.revoked = self.revoked
+        return model
+    }
+}
+
+struct IncomingRefreshToken: Content {
     let token: String
 }
 
