@@ -11,9 +11,6 @@ import Vapor
 
 struct CommentsController: RouteCollection {
 
-    // NEED TO AUTHORIZE EACH ENDPOINT
-    // NEED TO CHECK VALIDITY OF CIRCLE USER RELATION
-
     let helper = ControllerHelper()
 
     func boot(routes: any RoutesBuilder) throws {
@@ -37,10 +34,13 @@ struct CommentsController: RouteCollection {
 
     func retrieveAll(req: Request) async throws -> Response {
         // authenticate user on request
-        _ = try req.auth.require(User.self)
-
-        // confirm circle exists -- may be more efficient to send back boolean rather than object
-        _ = try await helper.getCircle(req: req)
+        let user = try req.auth.require(User.self)
+        let circle = try await helper.getCircle(req: req)
+        
+        if !user.isCircleMember(circle) {
+            throw Abort(.unauthorized, reason: "User is not a member of requested circle.")
+        }
+        
         // confirm post exists -- may be more efficient to send back boolean rather than object
         let post = try await helper.getPost(req: req)
 
@@ -53,9 +53,12 @@ struct CommentsController: RouteCollection {
     func createComment(req: Request) async throws -> Response {
         // authenticate user on request
         let user = try req.auth.require(User.self)
-
-        // confirm circle exists -- may be more efficient to send back boolean rather than object
-        _ = try await helper.getCircle(req: req)
+        let circle = try await helper.getCircle(req: req)
+        
+        if !user.isCircleMember(circle) {
+            throw Abort(.unauthorized, reason: "User is not a member of requested circle.")
+        }
+        
         // confirm post exists -- may be more efficient to send back boolean rather than object
         let post = try await helper.getPost(req: req)
 
@@ -75,10 +78,13 @@ struct CommentsController: RouteCollection {
 
     func retrieve(req: Request) async throws -> Response {
         // authenticate user on request
-        _ = try req.auth.require(User.self)
-
-        // confirm circle exists -- may be more efficient to send back boolean rather than object
-        _ = try await helper.getCircle(req: req)
+        let user = try req.auth.require(User.self)
+        let circle = try await helper.getCircle(req: req)
+        
+        if !user.isCircleMember(circle) {
+            throw Abort(.unauthorized, reason: "User is not a member of requested circle.")
+        }
+        
         // confirm post exists -- may be more efficient to send back boolean rather than object
         _ = try await helper.getPost(req: req)
 
@@ -92,14 +98,21 @@ struct CommentsController: RouteCollection {
             comment.content = dto.content
         }
         // authenticate user on request -- CONFIRM THAT CLIENT REQUEST IS COMMENT OWNER
-        _ = try req.auth.require(User.self)
-
-        // confirm circle exists -- may be more efficient to send back boolean rather than object
-        _ = try await helper.getCircle(req: req)
+        let user = try req.auth.require(User.self)
+        let circle = try await helper.getCircle(req: req)
+        
+        if !user.isCircleMember(circle) {
+            throw Abort(.unauthorized, reason: "User is not a member of requested circle.")
+        }
+        
         // confirm post exists -- may be more efficient to send back boolean rather than object
         _ = try await helper.getPost(req: req)
-
         let comment = try await helper.getComment(req: req)
+        
+        if !user.isCommentAuthor(comment) {
+            throw Abort(.unauthorized, reason: "User is not the author of requested comment.")
+        }
+        
         let dto = try req.content.decode(CommentDTO.self)
         let sanitizedDTO = try dto.validateAndSanitize()
         transferFields(sanitizedDTO, comment: comment)
@@ -110,14 +123,21 @@ struct CommentsController: RouteCollection {
 
     func remove(req: Request) async throws -> Response {
         // authenticate user on request -- CONFIRM THAT CLIENT REQUEST IS COMMENT OWNER
-        _ = try req.auth.require(User.self)
-
-        // confirm circle exists -- may be more efficient to send back boolean rather than object
-        _ = try await helper.getCircle(req: req)
+        let user = try req.auth.require(User.self)
+        let circle = try await helper.getCircle(req: req)
+        
+        if !user.isCircleMember(circle) {
+            throw Abort(.unauthorized, reason: "User is not a member of requested circle.")
+        }
+        
         // confirm post exists -- may be more efficient to send back boolean rather than object
         _ = try await helper.getPost(req: req)
-
         let comment = try await helper.getComment(req: req)
+        
+        if !user.isCommentAuthor(comment) {
+            throw Abort(.unauthorized, reason: "User is not the author of requested comment.")
+        }
+        
         try await comment.delete(on: req.db)
         return Response(
             status: .ok,

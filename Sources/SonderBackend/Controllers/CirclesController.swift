@@ -10,8 +10,7 @@ import SonderDTOs
 import Vapor
 
 struct CirclesController: RouteCollection {
-
-    // NEED TO AUTHORIZE ALL ENDPOINTS
+    
     // WHO CAN CREATE A CIRCLE AND WHEN
 
     let helper = ControllerHelper()
@@ -57,9 +56,13 @@ struct CirclesController: RouteCollection {
 
     func retrieve(req: Request) async throws -> Response {
         // authenticate user on request
-        _ = try req.auth.require(User.self)
-
+        let user = try req.auth.require(User.self)
         let circle = try await helper.getCircle(req: req)
+        
+        if !user.isCircleMember(circle) {
+            throw Abort(.unauthorized, reason: "User is not a member of requested circle.")
+        }
+        
         let dto = CircleDTO(from: circle)
         return try helper.sendResponseObject(dto: dto)
     }
@@ -73,13 +76,15 @@ struct CirclesController: RouteCollection {
             }
         }
         // authenticate user on request
-        _ = try req.auth.require(User.self)
-
+        let user = try req.auth.require(User.self)
         let circle = try await helper.getCircle(req: req)
+        
+        if !user.isCircleMember(circle) {
+            throw Abort(.unauthorized, reason: "User is not a member of requested circle.")
+        }
 
         let dto = try req.content.decode(CircleDTO.self)
         let sanitizedDTO = try dto.validateAndSanitize()
-
         transferFields(sanitizedDTO, circle)
 
         try await circle.update(on: req.db)
@@ -90,9 +95,13 @@ struct CirclesController: RouteCollection {
 
     func remove(req: Request) async throws -> Response {
         // authenticate user on request
-        _ = try req.auth.require(User.self)
-
+        let user = try req.auth.require(User.self)
         let circle = try await helper.getCircle(req: req)
+        
+        if !user.isCircleMember(circle) {
+            throw Abort(.unauthorized, reason: "User is not a member of requested circle.")
+        }
+        
         try await circle.delete(on: req.db)
         return Response(
             status: .ok,
@@ -102,9 +111,12 @@ struct CirclesController: RouteCollection {
 
     func retrieveUsers(req: Request) async throws -> Response {
         // authenticate user on request
-        _ = try req.auth.require(User.self)
-
+        let user = try req.auth.require(User.self)
         let circle = try await helper.getCircle(req: req)
+        
+        if !user.isCircleMember(circle) {
+            throw Abort(.unauthorized, reason: "User is not a member of requested circle.")
+        }
 
         let userDTOs = try await circle.$users.query(on: req.db).all()
             .map { UserDTO(from: $0) }
@@ -113,9 +125,12 @@ struct CirclesController: RouteCollection {
 
     func retrieveFeed(req: Request) async throws -> Response {
         // authenticate user on request
-        _ = try req.auth.require(User.self)
-
+        let user = try req.auth.require(User.self)
         let circle = try await helper.getCircle(req: req)
+        
+        if !user.isCircleMember(circle) {
+            throw Abort(.unauthorized, reason: "User is not a member of requested circle.")
+        }
 
         // ADD IN PAGINATION FUNCTIONALITY
 

@@ -32,9 +32,12 @@ struct CalendarEventsController: RouteCollection {
 
     func retrieveCircleEvents(req: Request) async throws -> Response {
         // authenticate user on request
-        _ = try req.auth.require(User.self)
-
+        let user = try req.auth.require(User.self)
         let circle = try await helper.getCircle(req: req)
+        
+        if !user.isCircleMember(circle) {
+            throw Abort(.unauthorized, reason: "User is not a member of requested circle.")
+        }
 
         let eventDTOs = try await circle.$events.query(on: req.db)
             .all()
@@ -44,9 +47,13 @@ struct CalendarEventsController: RouteCollection {
 
     func retrieveEvent(req: Request) async throws -> Response {
         // authenticate user on request
-        _ = try req.auth.require(User.self)
-
-        _ = try await helper.getCircle(req: req)
+        let user = try req.auth.require(User.self)
+        let circle = try await helper.getCircle(req: req)
+        
+        if !user.isCircleMember(circle) {
+            throw Abort(.unauthorized, reason: "User is not a member of requested circle.")
+        }
+        
         let calendarEvent = try await helper.getCalendarEvent(req: req)
 
         let dto = CalendarEventDTO(from: calendarEvent)
@@ -56,8 +63,11 @@ struct CalendarEventsController: RouteCollection {
     func createEvent(req: Request) async throws -> Response {
         // authenticate user on request
         let user = try req.auth.require(User.self)
-
         let circle = try await helper.getCircle(req: req)
+        
+        if !user.isCircleMember(circle) {
+            throw Abort(.unauthorized, reason: "User is not a member of requested circle.")
+        }
 
         var eventDTO = try req.content.decode(CalendarEventDTO.self)
         eventDTO.hostID = user.id!
@@ -83,10 +93,19 @@ struct CalendarEventsController: RouteCollection {
             event.endTime = dto.endTime
         }
         // authenticate user on request
-        _ = try req.auth.require(User.self)
-
-        _ = try await helper.getCircle(req: req)
+        let user = try req.auth.require(User.self)
+        let circle = try await helper.getCircle(req: req)
+        
+        if !user.isCircleMember(circle) {
+            throw Abort(.unauthorized, reason: "User is not a member of requested circle.")
+        }
+        
         let calendarEvent = try await helper.getCalendarEvent(req: req)
+        
+        if !user.isEventHost(calendarEvent) {
+            throw Abort(.unauthorized, reason: "User is not the host of requested event.")
+        }
+        
         let dto = try req.content.decode(CalendarEventDTO.self)
         let sanitizedDTO = try dto.validateAndSanitize()
         transferFields(sanitizedDTO, event: calendarEvent)
@@ -97,10 +116,19 @@ struct CalendarEventsController: RouteCollection {
 
     func removeEvent(req: Request) async throws -> Response {
         // authenticate user on request
-        _ = try req.auth.require(User.self)
-
-        _ = try await helper.getCircle(req: req)
+        let user = try req.auth.require(User.self)
+        let circle = try await helper.getCircle(req: req)
+        
+        if !user.isCircleMember(circle) {
+            throw Abort(.unauthorized, reason: "User is not a member of requested circle.")
+        }
+        
         let calendarEvent = try await helper.getCalendarEvent(req: req)
+        
+        if !user.isEventHost(calendarEvent) {
+            throw Abort(.unauthorized, reason: "User is not the host of requested event.")
+        }
+        
         try await calendarEvent.delete(on: req.db)
         return Response(
             status: .ok,
