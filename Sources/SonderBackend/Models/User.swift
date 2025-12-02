@@ -176,6 +176,41 @@ extension User {
         try await revokeAllAccessTokens(req: req)
         try await revokeAllRefreshTokens(req: req)
     }
+    
+    func isCircleMember(_ circle: Circle) -> Bool {
+        guard let circleID = circle.id else {
+            return false
+        }
+        if let userCircleID = self.$circle.id {
+            return userCircleID == circleID
+        } else {
+            return false
+        }
+    }
+    
+    func isPostAuthor(_ post: Post) -> Bool {
+        if let userID = self.id {
+            return userID == post.$author.id
+        } else {
+            return false
+        }
+    }
+    
+    func isCommentAuthor(_ comment: Comment) -> Bool {
+        if let userID = self.id {
+            return userID == comment.$author.id
+        } else {
+            return false
+        }
+    }
+    
+    func isEventHost(_ event: CalendarEvent) -> Bool {
+        if let userID = self.id {
+            return userID == event.$host.id
+        } else {
+            return false
+        }
+    }
 
     func exists(on database: any Database) async throws -> Bool {
         try await User.find(self.id, on: database) != nil

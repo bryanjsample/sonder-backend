@@ -32,9 +32,12 @@ struct PostsController: RouteCollection {
 
     func retrieveCirclePosts(req: Request) async throws -> Response {
         // authenticate user on request
-        _ = try req.auth.require(User.self)
-
+        let user = try req.auth.require(User.self)
         let circle = try await helper.getCircle(req: req)
+        
+        if !user.isCircleMember(circle) {
+            throw Abort(.unauthorized, reason: "User is not a member of requested circle.")
+        }
 
         let postDTOs = try await circle.$posts.query(on: req.db)
             .all()
@@ -45,8 +48,11 @@ struct PostsController: RouteCollection {
     func createPost(req: Request) async throws -> Response {
         // authenticate user on request
         let user = try req.auth.require(User.self)
-
         let circle = try await helper.getCircle(req: req)
+        
+        if !user.isCircleMember(circle) {
+            throw Abort(.unauthorized, reason: "User is not a member of requested circle.")
+        }
 
         var postDTO = try req.content.decode(PostDTO.self)
 
@@ -67,9 +73,12 @@ struct PostsController: RouteCollection {
 
     func retrievePost(req: Request) async throws -> Response {
         // authenticate user on request
-        _ = try req.auth.require(User.self)
-
-        _ = try await helper.getCircle(req: req)
+        let user = try req.auth.require(User.self)
+        let circle = try await helper.getCircle(req: req)
+        
+        if !user.isCircleMember(circle) {
+            throw Abort(.unauthorized, reason: "User is not a member of requested circle.")
+        }
         let post = try await helper.getPost(req: req)
 
         let dto = PostDTO(from: post)
@@ -81,10 +90,18 @@ struct PostsController: RouteCollection {
             post.content = dto.content
         }
         // authenticate user on request -- ENSURE CLIENT IS COMMENT AUTHOR
-        _ = try req.auth.require(User.self)
-
-        _ = try await helper.getCircle(req: req)
+        let user = try req.auth.require(User.self)
+        let circle = try await helper.getCircle(req: req)
+        
+        if !user.isCircleMember(circle) {
+            throw Abort(.unauthorized, reason: "User is not a member of requested circle.")
+        }
+        
         let post = try await helper.getPost(req: req)
+        
+        if !user.isPostAuthor(post) {
+            throw Abort(.unauthorized, reason: "User is not the author of requested post.")
+        }
 
         let dto = try req.content.decode(PostDTO.self)
         let sanitizedDTO = try dto.validateAndSanitize()
@@ -100,10 +117,19 @@ struct PostsController: RouteCollection {
 
     func removePost(req: Request) async throws -> Response {
         // authenticate user on request -- ENSURE CLIENT IS COMMENT AUTHOR
-        _ = try req.auth.require(User.self)
-
-        _ = try await helper.getCircle(req: req)
+        let user = try req.auth.require(User.self)
+        let circle = try await helper.getCircle(req: req)
+        
+        if !user.isCircleMember(circle) {
+            throw Abort(.unauthorized, reason: "User is not a member of requested circle.")
+        }
+        
         let post = try await helper.getPost(req: req)
+        
+        if !user.isPostAuthor(post) {
+            throw Abort(.unauthorized, reason: "User is not the author of requested post.")
+        }
+        
         try await post.delete(on: req.db)
         return Response(
             status: .ok,
