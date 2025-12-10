@@ -188,6 +188,14 @@ extension User {
         }
     }
     
+    func isInCircle() -> Bool {
+        if self.$circle.id != nil {
+            return true
+        } else {
+            return false
+        }
+    }
+    
     func isPostAuthor(_ post: Post) -> Bool {
         if let userID = self.id {
             return userID == post.$author.id

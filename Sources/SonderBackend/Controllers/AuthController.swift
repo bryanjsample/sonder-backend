@@ -24,6 +24,7 @@ struct AuthController: RouteCollection {
             throw Abort(.badRequest, reason: "Google callback url not found")
         }
 
+        // FOR WEB SERVER AUTHENTICATION
         try routes.oAuth(
             from: Google.self,
             authenticate: "auth/google",
@@ -31,25 +32,40 @@ struct AuthController: RouteCollection {
             scope: ["profile", "email"]
         ) { req, _ in
             req.logger.info("made it to callback code")
-            let userInfo = try await Google.getUser(on: req)
-            let query = try URLEncodedFormEncoder().encode(userInfo)
-            return req.redirect(to: "/auth/google/success?\(query)")
+            let googleUserProfileAPIKey = try await Google.getUserProfileAPIKey(on: req)
+            
+            var headers = HTTPHeaders()
+            headers.bearerAuthorization = BearerAuthorization(token: googleUserProfileAPIKey.token)
+            
+            req.logger.info("constructed request in callback")
+            
+            let response = try await req.client.post("http://127.0.0.1:8080/auth/google/success", headers: headers)
+            
+            req.logger.info("received reesponse in callback")
+            
+            let tokens = try response.content.decode(TokenResponseDTO.self)
+            
+            return try helper.sendResponseObject(dto: tokens)
         }
         
         let auth = routes.grouped("auth")
         
         auth.group("refresh") { refresh in
-            refresh.get(use: processRefreshToken)
+            refresh.post(use: processRefreshToken)
+        }
+        
+        auth.group("ios") { ios in
+            ios.post(use: processIosUser)
         }
 
         auth.group("google", "success") { googleSuccess in
-            googleSuccess.get(use: processGoogleUser)
+            googleSuccess.post(use: processGoogleUser)
         }
 
     }
     
     func processRefreshToken(req: Request) async throws -> Response {
-        let incomingToken = try req.content.decode(IncomingRefreshToken.self)
+        let incomingToken = try req.content.decode(IncomingTokenDTO.self)
         guard let refreshToken = try await RefreshToken.query(on: req.db)
             .filter(\.$token == incomingToken.token)
             .first() else {
@@ -78,7 +94,11 @@ struct AuthController: RouteCollection {
     }
 
     func processGoogleUser(req: Request) async throws -> Response {
-        let userInfo = try req.query.decode(GoogleUserInfo.self)
+        let apiKey = req.headers.bearerAuthorization?.token
+        guard let googleAPIKey = apiKey else {
+            throw Abort(.unauthorized, reason: "Google auth token not included in headers.")
+        }
+        let userInfo = try await Google.getUserProfile(on: req, APIKey: IncomingTokenDTO(googleAPIKey))
         if let existingUser = try await User.query(on: req.db)
             .filter(\.$email == userInfo.email)
             .first() {
@@ -90,11 +110,26 @@ struct AuthController: RouteCollection {
             try await refreshToken.save(on: req.db)
             let refreshDTO = RefreshTokenDTO(from: refreshToken)
             
-            let resDTO = TokenResponseDTO(accessToken: accessDTO, refreshToken: refreshDTO)
+            let resDTO = TokenResponseDTO(userNeedsToBeOnboarded: false, userInCircle: existingUser.isInCircle(), accessToken: accessDTO, refreshToken: refreshDTO)
             return try helper.sendResponseObject(dto: resDTO)
         } else {
             return try await onboardNewUser(req: req, userInfo: userInfo)
         }
+    }
+    
+    func processIosUser(req: Request) async throws -> Response {
+        let apiKey = req.headers.bearerAuthorization?.token
+        guard let googleAPIKey = apiKey else {
+            throw Abort(.unauthorized, reason: "Google auth token not included in headers.")
+        }
+        
+        var headers = HTTPHeaders()
+        headers.bearerAuthorization = BearerAuthorization(token: googleAPIKey)
+        let response = try await req.client.post("http://127.0.0.1:8080/auth/google/success", headers: headers)
+        
+        let tokens = try response.content.decode(TokenResponseDTO.self)
+        
+        return try helper.sendResponseObject(dto: tokens)
     }
     
     func onboardNewUser(req: Request, userInfo: GoogleUserInfo) async throws -> Response {
@@ -115,7 +150,7 @@ struct AuthController: RouteCollection {
         try await refreshToken.save(on: req.db)
         let refreshDTO = RefreshTokenDTO(from: refreshToken)
         
-        let resDTO = TokenResponseDTO(accessToken: accessDTO, refreshToken: refreshDTO)
+        let resDTO = TokenResponseDTO(userNeedsToBeOnboarded: true, userInCircle: false, accessToken: accessDTO, refreshToken: refreshDTO)
         return try helper.sendResponseObject(dto: resDTO)
     }
     
@@ -161,10 +196,6 @@ extension RefreshTokenDTO {
     }
 }
 
-struct IncomingRefreshToken: Content {
-    let token: String
-}
-
 struct GoogleUserInfo: Content {
     let email: String
     let emailVerified: Bool
@@ -182,37 +213,34 @@ struct GoogleUserInfo: Content {
 }
 
 extension Google {
-    static func getUser(on req: Request) async throws -> GoogleUserInfo {
+    static func getUserProfileAPIKey(on req: Request) async throws -> IncomingTokenDTO {
+        req.logger.info("made it into getUserProfileAPIKey")
+        let token = try req.accessToken
+        return IncomingTokenDTO(token)
+    }
+    
+    static func getUserProfile(on req: Request, APIKey: IncomingTokenDTO) async throws -> GoogleUserInfo {
+        req.logger.info("made it into getUserProfile")
         var headers = HTTPHeaders()
-        headers.bearerAuthorization = try BearerAuthorization(
-            token: req.accessToken
-        )
-        let googleAPIURL: URI =
-            "https://openidconnect.googleapis.com/v1/userinfo"
-        let response = try await req.client.get(googleAPIURL, headers: headers)
+        headers.bearerAuthorization = BearerAuthorization(token: APIKey.token)
+        let googleAPIUrl: URI = "https://openidconnect.googleapis.com/v1/userinfo"
+        let response = try await req.client.get(googleAPIUrl, headers: headers)
+        
         guard response.status == .ok else {
             if response.status == .unauthorized {
                 throw Abort.redirect(to: "/auth/google")
             } else {
-                throw Abort(
-                    .internalServerError,
-                    reason: "Authentication failed in an unexpected way"
-                )
+                throw Abort(.internalServerError, reason: "Authentication failed in an unexpected way")
             }
         }
-
+        
         let googInfo = try response.content.decode(GoogleUserInfo.self)
-
+        
         if googInfo.emailVerified {
             req.logger.info("email is verified")
             return googInfo
         } else {
-            req.logger.info("email is not verified")
-            throw Abort(
-                .unauthorized,
-                reason:
-                    "Google email is not verified. Please verify email and attempt onboarding again."
-            )
+            throw Abort(.unauthorized, reason: "Google email is not verified. Please verify email and attempt onboarding again.")
         }
     }
 }
