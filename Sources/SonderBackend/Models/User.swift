@@ -157,16 +157,20 @@ extension User {
     }
     
     func revokeAllAccessTokens(req: Request) async throws {
-        let accessTokens = try await self.$accessTokens.query(on: req.db).all()
-        for token in accessTokens {
+        let unrevokedAccessTokens = try await self.$accessTokens.query(on: req.db)
+            .filter(\.$revoked == false)
+            .all()
+        for token in unrevokedAccessTokens {
             token.revoked = true
             try await token.update(on: req.db)
         }
     }
     
     func revokeAllRefreshTokens(req: Request) async throws {
-        let refreshTokens = try await self.$refreshTokens.query(on: req.db).all()
-        for token in refreshTokens {
+        let unrevokedRefreshTokens = try await self.$refreshTokens.query(on: req.db)
+            .filter(\.$revoked == false)
+            .all()
+        for token in unrevokedRefreshTokens {
             token.revoked = true
             try await token.update(on: req.db)
         }

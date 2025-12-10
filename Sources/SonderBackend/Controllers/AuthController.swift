@@ -41,9 +41,15 @@ struct AuthController: RouteCollection {
             
             let response = try await req.client.post("http://127.0.0.1:8080/auth/google/success", headers: headers)
             
-            req.logger.info("received reesponse in callback")
+            req.logger.info("received response in callback")
             
-            let tokens = try response.content.decode(TokenResponseDTO.self)
+            guard let responseBody = response.body else {
+                throw Abort(.unauthorized, reason: "Response in callback does not include any content within the body")
+            }
+            
+            let tokens = try JSONDecoder().decode(TokenResponseDTO.self, from: responseBody)
+            
+            req.logger.info("tokens have been decoded from response")
             
             return try helper.sendResponseObject(dto: tokens)
         }
