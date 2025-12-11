@@ -13,6 +13,9 @@ import Vapor
 struct AuthController: RouteCollection {
 
     let helper = ControllerHelper()
+    let serverHostname = ProcessInfo.processInfo.environment["SERVER_HOSTNAME"] ?? "127.0.0.1"
+    let serverPort = ProcessInfo.processInfo.environment["SERVER_PORT"] ?? "8080"
+    
 
     func boot(routes: any RoutesBuilder) throws {
 
@@ -38,8 +41,10 @@ struct AuthController: RouteCollection {
             headers.bearerAuthorization = BearerAuthorization(token: googleUserProfileAPIKey.token)
             
             req.logger.info("constructed request in callback")
+            req.logger.info("server hostname = \(serverHostname)")
+            req.logger.info("server port = \(serverPort)")
             
-            let response = try await req.client.post("http://127.0.0.1:8080/auth/google/success", headers: headers)
+            let response = try await req.client.post("http://\(serverHostname):\(serverPort)/auth/google/success", headers: headers)
             
             req.logger.info("received response in callback")
             
@@ -117,6 +122,7 @@ struct AuthController: RouteCollection {
             let refreshDTO = RefreshTokenDTO(from: refreshToken)
             
             let resDTO = TokenResponseDTO(userNeedsToBeOnboarded: false, userInCircle: existingUser.isInCircle(), accessToken: accessDTO, refreshToken: refreshDTO)
+            req.logger.info("created fresh tokens for existing user...\nresDTO = \(resDTO)")
             return try helper.sendResponseObject(dto: resDTO)
         } else {
             return try await onboardNewUser(req: req, userInfo: userInfo)
@@ -131,9 +137,19 @@ struct AuthController: RouteCollection {
         
         var headers = HTTPHeaders()
         headers.bearerAuthorization = BearerAuthorization(token: googleAPIKey)
-        let response = try await req.client.post("http://127.0.0.1:8080/auth/google/success", headers: headers)
         
-        let tokens = try response.content.decode(TokenResponseDTO.self)
+        req.logger.info("server hostname = \(serverHostname)")
+        req.logger.info("server port = \(serverPort)")
+        
+        let response = try await req.client.post("http://\(serverHostname):\(serverPort)/auth/google/success", headers: headers)
+        
+        guard let responseBody = response.body else {
+            throw Abort(.unauthorized, reason: "Response in callback does not include any content within the body")
+        }
+        
+        let tokens = try JSONDecoder().decode(TokenResponseDTO.self, from: responseBody)
+        
+        req.logger.info("decoded tokens... sending response object\ntokens = \(tokens)")
         
         return try helper.sendResponseObject(dto: tokens)
     }

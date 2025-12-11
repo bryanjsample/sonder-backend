@@ -2,11 +2,17 @@ import Fluent
 import FluentPostgresDriver
 import NIOSSL
 import Vapor
-
 // configures your application
 public func configure(_ app: Application) async throws {
     // uncomment to serve files from /Public folder
     // app.middleware.use(FileMiddleware(publicDirectory: app.directory.publicDirectory))
+    
+    // configure server ip and port
+    let serverHostname = ProcessInfo.processInfo.environment["SERVER_HOSTNAME"]
+    app.http.server.configuration.hostname = serverHostname ?? "127.0.0.1"
+    let serverPort = ProcessInfo.processInfo.environment["SERVER_PORT"]
+    let port = serverPort ?? "8080"
+    app.http.server.configuration.port = Int(port) ?? 8080
 
     app.middleware.use(app.sessions.middleware)
 
