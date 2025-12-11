@@ -6,7 +6,6 @@
 //
 
 import Fluent
-import Foundation
 import Vapor
 import SonderDTOs
 
@@ -104,6 +103,18 @@ extension Date {
 }
 
 extension User {
+    
+    func transferFieldsFromDTO(_ dto: UserDTO) {
+        self.email = dto.email
+        self.firstName = dto.firstName
+        self.lastName = dto.lastName
+        if let username = dto.username {
+            self.username = username
+        }
+        if let pictureUrl = dto.pictureUrl {
+            self.pictureUrl = pictureUrl
+        }
+    }
     
     func generateAccessToken(req: Request) async throws -> AccessToken {
         try await self.revokeAllAccessTokens(req: req)

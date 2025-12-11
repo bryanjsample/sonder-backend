@@ -20,6 +20,10 @@ struct MeController: RouteCollection {
         meProtected.get(use: retrieve)
         meProtected.patch(use: edit)
         meProtected.delete(use: remove)
+        
+        meProtected.group("onboard") { onboard in
+            onboard.post(use: onboardNewUser)
+        }
 
         meProtected.group("events") { myEvents in
             myEvents.get(use: retrieveEvents)
@@ -38,23 +42,12 @@ struct MeController: RouteCollection {
     }
 
     func edit(req: Request) async throws -> Response {
-        func transferFields(_ dto: UserDTO, _ user: User, ) {
-            user.email = dto.email
-            user.firstName = dto.firstName
-            user.lastName = dto.lastName
-            if let username = dto.username {
-                user.username = username
-            }
-            if let pictureUrl = dto.pictureUrl {
-                user.pictureUrl = pictureUrl
-            }
-        }
         let myself = try req.auth.require(User.self)
 
         let dto = try req.content.decode(UserDTO.self)
         let sanitizedDTO = try dto.validateAndSanitize()
 
-        transferFields(sanitizedDTO, myself)
+        myself.transferFieldsFromDTO(sanitizedDTO)
 
         try await myself.update(on: req.db)
 
@@ -70,6 +63,21 @@ struct MeController: RouteCollection {
             status: .ok,
             body: .init(stringLiteral: "User was removed from database")
         )
+    }
+    
+    func onboardNewUser(req: Request) async throws -> Response {
+        let myself = try req.auth.require(User.self)
+        
+        let dto = try req.content.decode(UserDTO.self)
+        let sanitizedDTO = try dto.validateAndSanitize()
+        
+        myself.transferFieldsFromDTO(sanitizedDTO)
+        myself.isOnboarded = true
+        
+        try await myself.update(on: req.db)
+        
+        let resDTO = UserDTO(from: myself)
+        return try helper.sendResponseObject(dto: resDTO)
     }
 
     func retrieveEvents(req: Request) async throws -> Response {

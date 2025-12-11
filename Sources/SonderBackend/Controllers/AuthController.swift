@@ -16,7 +16,6 @@ struct AuthController: RouteCollection {
     let serverHostname = ProcessInfo.processInfo.environment["SERVER_HOSTNAME"] ?? "127.0.0.1"
     let serverPort = ProcessInfo.processInfo.environment["SERVER_PORT"] ?? "8080"
     
-
     func boot(routes: any RoutesBuilder) throws {
 
         guard
@@ -72,10 +71,6 @@ struct AuthController: RouteCollection {
         auth.group("google", "success") { googleSuccess in
             googleSuccess.post(use: processGoogleUser)
         }
-        
-//        auth.group("onboard") { onboard in
-//            onboard.post(use: onboardNewUser)
-//        }
 
     }
     
@@ -157,10 +152,6 @@ struct AuthController: RouteCollection {
         
         return try helper.sendResponseObject(dto: tokens)
     }
-    
-//    func onboardNewUser(req: Request) async throws -> Response {
-//        
-//    }
     
     func createNewUserAndGenerateTokens(req: Request, userInfo: GoogleUserInfo) async throws -> Response {
         let newUser = try User(
