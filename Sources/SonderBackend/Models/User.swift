@@ -48,6 +48,9 @@ final class User: Model, @unchecked Sendable, Authenticatable {
 
     @Field(key: "picture_url")
     var pictureUrl: String?
+    
+    @Field(key: "is_onboarded")
+    var isOnboarded: Bool
 
     @Timestamp(key: "created_at", on: .create)
     var createdAt: Date?
@@ -65,6 +68,7 @@ final class User: Model, @unchecked Sendable, Authenticatable {
         lastName: String,
         username: String? = nil,
         pictureUrl: String? = nil,
+        isOnboarded: Bool = false
     ) throws {
         self.id = id
         self.$circle.id = try circle?.requireID()
@@ -73,6 +77,7 @@ final class User: Model, @unchecked Sendable, Authenticatable {
         self.lastName = lastName
         self.username = username
         self.pictureUrl = pictureUrl
+        self.isOnboarded = isOnboarded
     }
 
 }

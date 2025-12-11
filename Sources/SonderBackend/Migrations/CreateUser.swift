@@ -17,6 +17,7 @@ struct CreateUser: AsyncMigration {
             .field("circle_id", .uuid, .references("circles", "id"))
             .field("username", .string)
             .field("picture_url", .string)
+            .field("is_onboarded", .bool, .required)
             .field("created_at", .datetime)
             .field("last_modified", .datetime)
             .unique(on: "email")

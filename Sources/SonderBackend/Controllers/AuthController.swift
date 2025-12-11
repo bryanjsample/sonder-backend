@@ -72,6 +72,10 @@ struct AuthController: RouteCollection {
         auth.group("google", "success") { googleSuccess in
             googleSuccess.post(use: processGoogleUser)
         }
+        
+        auth.group("onboard") { onboard in
+            onboard.post(use: onboardNewUser)
+        }
 
     }
     
@@ -121,11 +125,11 @@ struct AuthController: RouteCollection {
             try await refreshToken.save(on: req.db)
             let refreshDTO = RefreshTokenDTO(from: refreshToken)
             
-            let resDTO = TokenResponseDTO(userNeedsToBeOnboarded: false, userInCircle: existingUser.isInCircle(), accessToken: accessDTO, refreshToken: refreshDTO)
+            let resDTO = TokenResponseDTO(userNeedsToBeOnboarded: existingUser.isOnboarded, userInCircle: existingUser.isInCircle(), accessToken: accessDTO, refreshToken: refreshDTO)
             req.logger.info("created fresh tokens for existing user...\nresDTO = \(resDTO)")
             return try helper.sendResponseObject(dto: resDTO)
         } else {
-            return try await onboardNewUser(req: req, userInfo: userInfo)
+            return try await createNewUserAndGenerateTokens(req: req, userInfo: userInfo)
         }
     }
     
@@ -154,7 +158,11 @@ struct AuthController: RouteCollection {
         return try helper.sendResponseObject(dto: tokens)
     }
     
-    func onboardNewUser(req: Request, userInfo: GoogleUserInfo) async throws -> Response {
+    func onboardNewUser(req: Request) async throws -> Response {
+        
+    }
+    
+    func createNewUserAndGenerateTokens(req: Request, userInfo: GoogleUserInfo) async throws -> Response {
         let newUser = try User(
             email: userInfo.email,
             firstName: userInfo.givenName,

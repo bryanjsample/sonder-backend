@@ -107,6 +107,7 @@ extension UserDTO {
             lastName: user.lastName,
             username: user.username,
             pictureUrl: user.pictureUrl,
+            isOnboarded: user.isOnboarded
         )
         self.id = user.id ?? nil
         self.email = user.email
@@ -114,6 +115,7 @@ extension UserDTO {
         self.lastName = user.lastName
         self.username = user.username ?? nil
         self.pictureUrl = user.pictureUrl ?? nil
+        self.isOnboarded = user.isOnboarded
     }
 
     func toModel() -> User {
@@ -125,6 +127,7 @@ extension UserDTO {
         model.lastName = self.lastName
         model.username = self.username ?? nil
         model.pictureUrl = self.pictureUrl ?? nil
+        model.isOnboarded = self.isOnboarded
 
         return model
     }
