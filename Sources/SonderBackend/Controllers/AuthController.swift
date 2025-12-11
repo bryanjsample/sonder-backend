@@ -76,7 +76,7 @@ struct AuthController: RouteCollection {
     }
     
     func processRefreshToken(req: Request) async throws -> Response {
-        let incomingToken = try req.content.decode(IncomingTokenDTO.self)
+        let incomingToken = try req.content.decode(TokenStringDTO.self)
         guard let refreshToken = try await RefreshToken.query(on: req.db)
             .filter(\.$token == incomingToken.token)
             .first() else {
@@ -109,7 +109,7 @@ struct AuthController: RouteCollection {
         guard let googleAPIKey = apiKey else {
             throw Abort(.unauthorized, reason: "Google auth token not included in headers.")
         }
-        let userInfo = try await Google.getUserProfile(on: req, APIKey: IncomingTokenDTO(googleAPIKey))
+        let userInfo = try await Google.getUserProfile(on: req, APIKey: TokenStringDTO(googleAPIKey))
         if let existingUser = try await User.query(on: req.db)
             .filter(\.$email == userInfo.email)
             .first() {
@@ -235,13 +235,13 @@ struct GoogleUserInfo: Content {
 }
 
 extension Google {
-    static func getUserProfileAPIKey(on req: Request) async throws -> IncomingTokenDTO {
+    static func getUserProfileAPIKey(on req: Request) async throws -> TokenStringDTO {
         req.logger.info("made it into getUserProfileAPIKey")
         let token = try req.accessToken
-        return IncomingTokenDTO(token)
+        return TokenStringDTO(token)
     }
     
-    static func getUserProfile(on req: Request, APIKey: IncomingTokenDTO) async throws -> GoogleUserInfo {
+    static func getUserProfile(on req: Request, APIKey: TokenStringDTO) async throws -> GoogleUserInfo {
         req.logger.info("made it into getUserProfile")
         var headers = HTTPHeaders()
         headers.bearerAuthorization = BearerAuthorization(token: APIKey.token)
