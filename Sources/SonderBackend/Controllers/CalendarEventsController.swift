@@ -79,7 +79,7 @@ struct CalendarEventsController: RouteCollection {
         } else {
             try await calendarEvent.save(on: req.db)
             let dto = CalendarEventDTO(from: calendarEvent)
-            return try helper.sendResponseObject(dto: dto)
+            return try helper.sendResponseObject(dto: dto, responseStatus: .created)
         }
     }
 

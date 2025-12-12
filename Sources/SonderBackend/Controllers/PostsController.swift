@@ -63,11 +63,11 @@ struct PostsController: RouteCollection {
         let post = sanitizedDTO.toModel()
 
         if try await post.exists(on: req.db) {
-            throw Abort(.badRequest, reason: "Post already exists")
+            throw Abort(.conflict, reason: "Post already exists")
         } else {
             try await post.save(on: req.db)
             let dto = PostDTO(from: post)
-            return try helper.sendResponseObject(dto: dto)
+            return try helper.sendResponseObject(dto: dto, responseStatus: .created)
         }
     }
 

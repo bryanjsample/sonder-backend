@@ -68,11 +68,11 @@ struct CommentsController: RouteCollection {
         let sanitizedDTO = try commentDTO.validateAndSanitize()
         let comment = sanitizedDTO.toModel()
         if try await comment.exists(on: req.db) {
-            throw Abort(.badRequest, reason: "Comment already exists")
+            throw Abort(.conflict, reason: "Comment already exists")
         } else {
             try await comment.save(on: req.db)
             let dto = CommentDTO(from: comment)
-            return try helper.sendResponseObject(dto: dto)
+            return try helper.sendResponseObject(dto: dto, responseStatus: .created)
         }
     }
 

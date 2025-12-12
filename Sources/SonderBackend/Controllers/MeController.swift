@@ -77,7 +77,7 @@ struct MeController: RouteCollection {
         try await myself.update(on: req.db)
         
         let resDTO = UserDTO(from: myself)
-        return try helper.sendResponseObject(dto: resDTO)
+        return try helper.sendResponseObject(dto: resDTO, responseStatus: .created)
     }
 
     func retrieveEvents(req: Request) async throws -> Response {

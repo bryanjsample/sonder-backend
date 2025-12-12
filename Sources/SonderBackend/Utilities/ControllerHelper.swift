@@ -79,10 +79,11 @@ struct ControllerHelper {
 
     func sendResponseObject(
         dto: any Encodable,
+        responseStatus: HTTPResponseStatus = .ok,
         headerContent: String = "application/json; charset=utf-8"
     ) throws -> Response {
         let body = try Response.Body(data: JSONEncoder().encode(dto))
-        let response = Response(status: .ok, body: body)
+        let response = Response(status: responseStatus, body: body)
         response.headers.replaceOrAdd(name: .contentType, value: headerContent)
         return response
     }

@@ -52,11 +52,11 @@ struct CirclesController: RouteCollection {
         let circle = sanitizedDTO.toModel()
 
         if try await circle.exists(on: req.db) {
-            throw Abort(.badRequest, reason: "Circle already exists")
+            throw Abort(.conflict, reason: "Circle already exists")
         } else {
             try await circle.save(on: req.db)
             let dto = CircleDTO(from: circle)
-            return try helper.sendResponseObject(dto: dto)
+            return try helper.sendResponseObject(dto: dto, responseStatus: .created)
         }
     }
     

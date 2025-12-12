@@ -172,7 +172,7 @@ struct AuthController: RouteCollection {
         let refreshDTO = RefreshTokenDTO(from: refreshToken)
         
         let resDTO = TokenResponseDTO(userNeedsToBeOnboarded: true, userInCircle: false, accessToken: accessDTO, refreshToken: refreshDTO)
-        return try helper.sendResponseObject(dto: resDTO)
+        return try helper.sendResponseObject(dto: resDTO, responseStatus: .created)
     }
     
 }
@@ -249,7 +249,7 @@ extension Google {
         
         guard response.status == .ok else {
             if response.status == .unauthorized {
-                throw Abort.redirect(to: "/auth/google")
+                throw Abort(.unauthorized, reason: "Unauthorized to get google user profile")
             } else {
                 throw Abort(.internalServerError, reason: "Authentication failed in an unexpected way")
             }
