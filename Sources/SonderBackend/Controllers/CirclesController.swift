@@ -10,8 +10,6 @@ import SonderDTOs
 import Vapor
 
 struct CirclesController: RouteCollection {
-    
-    // WHO CAN CREATE A CIRCLE AND WHEN
 
     let helper = ControllerHelper()
 
@@ -21,6 +19,10 @@ struct CirclesController: RouteCollection {
         )
 
         circlesProtected.post(use: createCircle)
+        
+        circlesProtected.group("invitation") { invitation in
+            invitation.post(use: joinCircleViaInvitation)
+        }
 
         circlesProtected.group(":circleID") { circle in
             circle.get(use: retrieve)
@@ -39,7 +41,11 @@ struct CirclesController: RouteCollection {
 
     func createCircle(req: Request) async throws -> Response {
         // authenticate user on request
-        _ = try req.auth.require(User.self)
+        let user = try req.auth.require(User.self)
+        
+        if user.isInCircle() {
+            throw Abort(.conflict, reason: "User is already in a circle")
+        }
 
         let dto = try req.content.decode(CircleDTO.self)
         let sanitizedDTO = try dto.validateAndSanitize()
@@ -52,6 +58,25 @@ struct CirclesController: RouteCollection {
             let dto = CircleDTO(from: circle)
             return try helper.sendResponseObject(dto: dto)
         }
+    }
+    
+    func joinCircleViaInvitation(req: Request) async throws -> Response {
+        let user = try req.auth.require(User.self)
+        
+        if user.isInCircle() {
+            throw Abort(.conflict, reason: "User is already in a circle")
+        }
+        
+        let dto = try req.content.decode(InvitationStringDTO.self)
+        let circle = try await helper.getCircleViaInviteCode(req: req, inviteCode: dto)
+        guard let circleID = circle.id else {
+            throw Abort(.notFound, reason: "Circle ID is not found")
+        }
+        user.$circle.id = circleID
+        try await user.update(on: req.db)
+        
+        let resDTO = CircleDTO(from: circle)
+        return try helper.sendResponseObject(dto: resDTO)
     }
 
     func retrieve(req: Request) async throws -> Response {

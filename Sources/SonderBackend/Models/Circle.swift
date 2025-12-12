@@ -38,7 +38,7 @@ final class Circle: Model, @unchecked Sendable {
     @Children(for: \.$circle)
     var posts: [Post]
 
-    init() {}
+    init() { }
 
     init(
         id: UUID? = nil,

@@ -22,6 +22,21 @@ struct ControllerHelper {
         }
         return circle
     }
+    
+    func getCircleViaInviteCode(req: Request, inviteCode: InvitationStringDTO) async throws -> Circle {
+        
+        // need to sanitize invite code
+        
+        guard let invitationModel = try await CircleInvitation.query(on: req.db)
+            .filter(\.$invitationCode, .equal, inviteCode.invitation)
+            .first() else {
+            throw Abort(.notFound, reason: "Invite code does not exist")
+        }
+        
+        // check if invite code is expired
+        
+        return invitationModel.circle
+    }
 
     func getPost(req: Request) async throws -> Post {
         let postIDParam = try req.parameters.require("postID")
