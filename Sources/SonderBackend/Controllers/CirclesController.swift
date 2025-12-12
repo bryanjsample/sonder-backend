@@ -10,8 +10,6 @@ import SonderDTOs
 import Vapor
 
 struct CirclesController: RouteCollection {
-    
-    // WHO CAN CREATE A CIRCLE AND WHEN
 
     let helper = ControllerHelper()
 
@@ -43,7 +41,11 @@ struct CirclesController: RouteCollection {
 
     func createCircle(req: Request) async throws -> Response {
         // authenticate user on request
-        _ = try req.auth.require(User.self)
+        let user = try req.auth.require(User.self)
+        
+        if user.isInCircle() {
+            throw Abort(.conflict, reason: "User is already in a circle")
+        }
 
         let dto = try req.content.decode(CircleDTO.self)
         let sanitizedDTO = try dto.validateAndSanitize()
@@ -60,6 +62,10 @@ struct CirclesController: RouteCollection {
     
     func joinCircleViaInvitation(req: Request) async throws -> Response {
         let user = try req.auth.require(User.self)
+        
+        if user.isInCircle() {
+            throw Abort(.conflict, reason: "User is already in a circle")
+        }
         
         let dto = try req.content.decode(InvitationStringDTO.self)
         let circle = try await helper.getCircleViaInviteCode(req: req, inviteCode: dto)
@@ -195,4 +201,3 @@ extension CircleDTO {
         return model
     }
 }
-

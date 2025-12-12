@@ -80,7 +80,7 @@ struct AuthController: RouteCollection {
             .filter(\.$token == incomingToken.token)
             .first() else {
             req.logger.info("Refresh token does not exist.")
-            return req.redirect(to: "/auth/google")
+            throw Abort(.unauthorized, reason: "Refresh token does not exist")
         }
         
         let user = refreshToken.owner
@@ -99,7 +99,7 @@ struct AuthController: RouteCollection {
         } else {
             req.logger.info("Refresh token is not valid.")
             try await user.revokeAllTokens(req: req)
-            return req.redirect(to: "/auth/google")
+            throw Abort(.unauthorized, reason: "Refresh token does not exist")
         }
     }
 

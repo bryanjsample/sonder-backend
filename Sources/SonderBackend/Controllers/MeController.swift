@@ -135,7 +135,9 @@ extension UserDTO {
         model.lastName = self.lastName
         model.username = self.username ?? nil
         model.pictureUrl = self.pictureUrl ?? nil
-        model.isOnboarded = self.isOnboarded
+        if let isOnboarded = self.isOnboarded {
+            model.isOnboarded = isOnboarded
+        }
 
         return model
     }
