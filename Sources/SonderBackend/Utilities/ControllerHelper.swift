@@ -35,7 +35,10 @@ struct ControllerHelper {
         
         // check if invite code is expired
         
-        return invitationModel.circle
+        guard let circle = try await invitationModel.$circle.query(on: req.db).first() else {
+            throw Abort(.notFound, reason: "There is not a circle attached to the invite code")
+        }
+        return circle
     }
 
     func getPost(req: Request) async throws -> Post {

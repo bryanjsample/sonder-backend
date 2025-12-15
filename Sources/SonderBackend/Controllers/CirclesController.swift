@@ -20,8 +20,12 @@ struct CirclesController: RouteCollection {
 
         circlesProtected.post(use: createCircle)
         
-        circlesProtected.group("invitation") { invitation in
+        circlesProtected.group("invitation", "join") { invitation in
             invitation.post(use: joinCircleViaInvitation)
+        }
+        
+        circlesProtected.group("invitation", "create") { invitation in
+            invitation.post(use: createCircleInvitation)
         }
 
         circlesProtected.group(":circleID") { circle in
@@ -89,6 +93,19 @@ struct CirclesController: RouteCollection {
         try await user.update(on: req.db)
         
         let resDTO = CircleDTO(from: circle)
+        return try helper.sendResponseObject(dto: resDTO)
+    }
+    
+    func createCircleInvitation(req: Request) async throws -> Response {
+        let user = try req.auth.require(User.self)
+        
+        guard let circle = try await user.$circle.query(on: req.db).first() else {
+            throw Abort(.notFound, reason: "User is not in a circle")
+        }
+        
+        let invitation = try await circle.generateInvitationCode(req: req)
+        try await invitation.save(on: req.db)
+        let resDTO = CircleInvitationDTO(from: invitation)
         return try helper.sendResponseObject(dto: resDTO)
     }
 
@@ -209,5 +226,17 @@ extension CircleDTO {
         model.description = self.description
         model.pictureUrl = self.pictureUrl ?? nil
         return model
+    }
+}
+
+extension CircleInvitationDTO {
+    init(from invitation: CircleInvitation) {
+        self.init(
+            id: invitation.id,
+            invitation: invitation.invitationCode,
+            circleID: invitation.$circle.id,
+            expiresAt: invitation.expiresAt,
+            revoked: invitation.revoked
+        )
     }
 }

@@ -6,7 +6,7 @@
 //
 
 import Fluent
-import Foundation
+import Vapor
 import SonderDTOs
 
 final class Circle: Model, @unchecked Sendable {
@@ -38,6 +38,9 @@ final class Circle: Model, @unchecked Sendable {
 
     @Children(for: \.$circle)
     var posts: [Post]
+    
+    @Children(for: \.$circle)
+    var invitations: [CircleInvitation]
 
     init() { }
 
@@ -61,6 +64,26 @@ extension Circle {
         if let picureUrl = dto.pictureUrl {
             self.pictureUrl = picureUrl
         }
+    }
+    
+    func revokeAllInvitations(req: Request) async throws {
+        let unrevokedInvitations = try await self.$invitations.query(on: req.db)
+            .filter(\.$revoked == false)
+            .all()
+        for invitation in unrevokedInvitations {
+            invitation.revoked = true
+            try await invitation.update(on: req.db)
+        }
+    }
+    
+    func generateInvitationCode(req: Request) async throws -> CircleInvitation {
+        try await self.revokeAllInvitations(req: req)
+        return try .init(
+            invitationCode: [UInt8].random(count: 16).base64,
+            circle: self,
+            expiresAt: Date.now.adding(days: 7),
+            revoked: false
+        )
     }
     
     func exists(on database: any Database) async throws -> Bool {
