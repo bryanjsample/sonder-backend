@@ -44,10 +44,13 @@ struct MeController: RouteCollection {
     func edit(req: Request) async throws -> Response {
         let myself = try req.auth.require(User.self)
 
-        let dto = try req.content.decode(UserDTO.self)
-        let sanitizedDTO = try dto.validateAndSanitize()
-
-        myself.transferFieldsFromDTO(sanitizedDTO)
+        do {
+            let dto = try req.content.decode(UserDTO.self)
+            let sanitizedDTO = try dto.validateAndSanitize()
+            myself.transferFieldsFromDTO(sanitizedDTO)
+        } catch is ValidationError {
+            throw Abort(.badRequest, reason: "User content cannot be validated")
+        }
 
         try await myself.update(on: req.db)
 
@@ -68,12 +71,15 @@ struct MeController: RouteCollection {
     func onboardNewUser(req: Request) async throws -> Response {
         let myself = try req.auth.require(User.self)
         
-        let dto = try req.content.decode(UserDTO.self)
-        let sanitizedDTO = try dto.validateAndSanitize()
-        
-        myself.transferFieldsFromDTO(sanitizedDTO)
-        myself.isOnboarded = true
-        
+        do {
+            let dto = try req.content.decode(UserDTO.self)
+            let sanitizedDTO = try dto.validateAndSanitize()
+            myself.transferFieldsFromDTO(sanitizedDTO)
+            myself.isOnboarded = true
+        } catch {
+            throw Abort(.badRequest, reason: "User content cannot be validated")
+        }
+
         try await myself.update(on: req.db)
         
         let resDTO = UserDTO(from: myself)

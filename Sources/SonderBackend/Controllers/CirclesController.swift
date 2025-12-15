@@ -46,10 +46,16 @@ struct CirclesController: RouteCollection {
         if user.isInCircle() {
             throw Abort(.conflict, reason: "User is already in a circle")
         }
+        
+        var circle: Circle
 
-        let dto = try req.content.decode(CircleDTO.self)
-        let sanitizedDTO = try dto.validateAndSanitize()
-        let circle = sanitizedDTO.toModel()
+        do {
+            let dto = try req.content.decode(CircleDTO.self)
+            let sanitizedDTO = try dto.validateAndSanitize()
+            circle = sanitizedDTO.toModel()
+        } catch is ValidationError {
+            throw Abort(.badRequest, reason: "Circle cannot be validated")
+        }
 
         if try await circle.exists(on: req.db) {
             throw Abort(.conflict, reason: "Circle already exists")
@@ -93,13 +99,6 @@ struct CirclesController: RouteCollection {
     }
 
     func edit(req: Request) async throws -> Response {
-        func transferFields(_ dto: CircleDTO, _ circle: Circle) {
-            circle.name = dto.name
-            circle.description = dto.description
-            if let picureUrl = dto.pictureUrl {
-                circle.pictureUrl = picureUrl
-            }
-        }
         // authenticate user on request
         let user = try req.auth.require(User.self)
         let circle = try await helper.getCircle(req: req)
@@ -108,9 +107,13 @@ struct CirclesController: RouteCollection {
             throw Abort(.unauthorized, reason: "User is not a member of requested circle.")
         }
 
-        let dto = try req.content.decode(CircleDTO.self)
-        let sanitizedDTO = try dto.validateAndSanitize()
-        transferFields(sanitizedDTO, circle)
+        do {
+            let dto = try req.content.decode(CircleDTO.self)
+            let sanitizedDTO = try dto.validateAndSanitize()
+            circle.transferFieldsFromDTO(sanitizedDTO)
+        } catch is ValidationError {
+            throw Abort(.badRequest, reason: "Circle cannot be validated")
+        }
 
         try await circle.update(on: req.db)
 
