@@ -23,7 +23,7 @@ struct AuthController: RouteCollection {
                 "GOOGLE_CALLBACK_URL"
             ]
         else {
-            throw Abort(.badRequest, reason: "Google callback url not found")
+            throw Abort(.internalServerError, reason: "Google callback url not defined on server")
         }
 
         // FOR WEB SERVER AUTHENTICATION
@@ -83,7 +83,12 @@ struct AuthController: RouteCollection {
             throw Abort(.unauthorized, reason: "Refresh token does not exist")
         }
         
-        let user = refreshToken.owner
+        let userID = refreshToken.$owner.id
+        
+        guard let user = try await User.find(userID, on: req.db) else {
+            req.logger.info("User ID does not exist.")
+            throw Abort(.unauthorized, reason: "User ID does not exist")
+        }
         
         if refreshToken.isValid {
             req.logger.info("Refresh token is valid.")
@@ -94,7 +99,7 @@ struct AuthController: RouteCollection {
             
             let accessDTO = AccessTokenDTO(from: accessToken)
             let refreshDTO = RefreshTokenDTO(from: refreshToken)
-            let resDTO = TokenResponseDTO(accessToken: accessDTO, refreshToken: refreshDTO)
+            let resDTO = TokenResponseDTO(userIsOnboarded: user.isOnboarded, userInCircle: user.isInCircle(), accessToken: accessDTO, refreshToken: refreshDTO)
             return try helper.sendResponseObject(dto: resDTO)
         } else {
             req.logger.info("Refresh token is not valid.")
@@ -120,7 +125,7 @@ struct AuthController: RouteCollection {
             try await refreshToken.save(on: req.db)
             let refreshDTO = RefreshTokenDTO(from: refreshToken)
             
-            let resDTO = TokenResponseDTO(userNeedsToBeOnboarded: !existingUser.isOnboarded, userInCircle: existingUser.isInCircle(), accessToken: accessDTO, refreshToken: refreshDTO)
+            let resDTO = TokenResponseDTO(userIsOnboarded: existingUser.isOnboarded, userInCircle: existingUser.isInCircle(), accessToken: accessDTO, refreshToken: refreshDTO)
             req.logger.info("created fresh tokens for existing user...\nresDTO = \(resDTO)")
             return try helper.sendResponseObject(dto: resDTO)
         } else {
@@ -171,7 +176,7 @@ struct AuthController: RouteCollection {
         try await refreshToken.save(on: req.db)
         let refreshDTO = RefreshTokenDTO(from: refreshToken)
         
-        let resDTO = TokenResponseDTO(userNeedsToBeOnboarded: true, userInCircle: false, accessToken: accessDTO, refreshToken: refreshDTO)
+        let resDTO = TokenResponseDTO(userIsOnboarded: false, userInCircle: false, accessToken: accessDTO, refreshToken: refreshDTO)
         return try helper.sendResponseObject(dto: resDTO, responseStatus: .created)
     }
     
