@@ -62,6 +62,13 @@ struct CirclesController: RouteCollection {
         } else {
             try await circle.save(on: req.db)
             let dto = CircleDTO(from: circle)
+            guard let circleID = circle.id else {
+                throw Abort(.notFound, reason: "Circle ID is not found")
+            }
+            user.$circle.id = circleID
+            req.logger.info("circleID = \(circleID)")
+            try await user.update(on: req.db)
+            req.logger.info("User updated to contain circleID")
             return try helper.sendResponseObject(dto: dto, responseStatus: .created)
         }
     }

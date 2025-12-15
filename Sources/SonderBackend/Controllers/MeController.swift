@@ -116,6 +116,7 @@ extension UserDTO {
     init(from user: User) {
         self.init(
             id: user.id,
+            circleID: user.$circle.id,
             email: user.email,
             firstName: user.firstName,
             lastName: user.lastName,
@@ -124,6 +125,7 @@ extension UserDTO {
             isOnboarded: user.isOnboarded
         )
         self.id = user.id ?? nil
+        self.circleID = circleID ?? nil
         self.email = user.email
         self.firstName = user.firstName
         self.lastName = user.lastName
@@ -136,6 +138,7 @@ extension UserDTO {
         let model = User()
 
         model.id = self.id ?? nil
+        model.$circle.id = self.circleID ?? nil
         model.email = self.email
         model.firstName = self.firstName
         model.lastName = self.lastName
