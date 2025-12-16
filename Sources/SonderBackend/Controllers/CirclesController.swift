@@ -20,6 +20,10 @@ struct CirclesController: RouteCollection {
 
         circlesProtected.post(use: createCircle)
         
+        circlesProtected.group("invitation") { invitation in
+            invitation.get(use: getCircleInvitation)
+        }
+        
         circlesProtected.group("invitation", "join") { invitation in
             invitation.post(use: joinCircleViaInvitation)
         }
@@ -75,6 +79,23 @@ struct CirclesController: RouteCollection {
             req.logger.info("User updated to contain circleID")
             return try helper.sendResponseObject(dto: dto, responseStatus: .created)
         }
+    }
+    
+    func getCircleInvitation(req: Request) async throws -> Response {
+        let user = try req.auth.require(User.self)
+        
+        guard let circle = try await user.$circle.query(on: req.db).first() else {
+            throw Abort(.notFound, reason: "User is not in a circle")
+        }
+        
+        guard let invitation = try await circle.$invitations.query(on: req.db)
+            .filter(\.$revoked == false)
+            .first() else {
+            throw Abort(.notFound, reason: "No valid circle invitations")
+        }
+        
+        let dto = CircleInvitationDTO(from: invitation)
+        return try helper.sendResponseObject(dto: dto)
     }
     
     func joinCircleViaInvitation(req: Request) async throws -> Response {
