@@ -42,7 +42,10 @@ struct PostsController: RouteCollection {
         let postDTOs = try await circle.$posts.query(on: req.db)
             .all()
             .map { PostDTO(from: $0) }
-        return try helper.sendResponseObject(dto: postDTOs)
+        let sorted = postDTOs.sorted {
+            $0.createdAt! > $1.createdAt!
+        }
+        return try helper.sendResponseObject(dto: sorted)
     }
 
     func createPost(req: Request) async throws -> Response {

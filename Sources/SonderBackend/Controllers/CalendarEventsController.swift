@@ -42,7 +42,10 @@ struct CalendarEventsController: RouteCollection {
         let eventDTOs = try await circle.$events.query(on: req.db)
             .all()
             .map { CalendarEventDTO(from: $0) }
-        return try helper.sendResponseObject(dto: eventDTOs)
+        let sorted = eventDTOs.sorted {
+            $0.createdAt! > $1.createdAt!
+        }
+        return try helper.sendResponseObject(dto: sorted)
     }
 
     func retrieveEvent(req: Request) async throws -> Response {
@@ -68,8 +71,13 @@ struct CalendarEventsController: RouteCollection {
         if !user.isCircleMember(circle) {
             throw Abort(.unauthorized, reason: "User is not a member of requested circle.")
         }
+        
+        print("starting to decode event on backend")
 
         var eventDTO = try req.content.decode(CalendarEventDTO.self)
+        
+        print("event decoded from request on backend")
+        
         eventDTO.hostID = user.id!
         eventDTO.circleID = circle.id!
         let sanitizedDTO = try eventDTO.validateAndSanitize()
