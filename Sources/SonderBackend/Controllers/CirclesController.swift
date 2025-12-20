@@ -234,8 +234,8 @@ struct CirclesController: RouteCollection {
             .with(\.$circle)
             .with(\.$host)
             .all()
-        let postDTOs = posts.map { FeedItemDTO.post(PostDTO(from: $0)) }
-        let eventDTOs = events.map { FeedItemDTO.event(CalendarEventDTO(from: $0)) }
+        let postDTOs = posts.map { FeedItemDTO.post(PostDTO(from: $0, author: UserDTO(from: $0.author))) }
+        let eventDTOs = events.map { FeedItemDTO.event(CalendarEventDTO(from: $0, host: UserDTO(from: $0.host))) }
         
         let merged = (postDTOs + eventDTOs).sorted {
             $0.createdAt! > $1.createdAt!

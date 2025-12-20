@@ -39,9 +39,15 @@ struct CalendarEventsController: RouteCollection {
             throw Abort(.unauthorized, reason: "User is not a member of requested circle.")
         }
 
-        let eventDTOs = try await circle.$events.query(on: req.db)
-            .all()
-            .map { CalendarEventDTO(from: $0) }
+        let events = try await circle.$events.query(on: req.db).all()
+        
+        var eventDTOs: [CalendarEventDTO] = []
+        for event in events {
+            let host = try await event.$host.get(on: req.db)
+            let hostDTO = UserDTO(from: host)
+            eventDTOs.append(CalendarEventDTO(from: event, host: hostDTO))
+        }
+        
         let sorted = eventDTOs.sorted {
             $0.createdAt! > $1.createdAt!
         }
@@ -58,8 +64,10 @@ struct CalendarEventsController: RouteCollection {
         }
         
         let calendarEvent = try await helper.getCalendarEvent(req: req)
+        let host = try await calendarEvent.$host.get(on: req.db)
 
-        let dto = CalendarEventDTO(from: calendarEvent)
+        var dto = CalendarEventDTO(from: calendarEvent)
+        dto.host = UserDTO(from: host)
         return try helper.sendResponseObject(dto: dto)
     }
 
