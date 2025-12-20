@@ -143,7 +143,12 @@ struct CirclesController: RouteCollection {
             throw Abort(.unauthorized, reason: "User is not a member of requested circle.")
         }
         
-        let dto = CircleDTO(from: circle)
+        var dto = CircleDTO(from: circle)
+        
+        let members = try await circle.$users.query(on: req.db).all().map {
+            UserDTO(from: $0)
+        }
+        dto.members = members
         return try helper.sendResponseObject(dto: dto)
     }
 
