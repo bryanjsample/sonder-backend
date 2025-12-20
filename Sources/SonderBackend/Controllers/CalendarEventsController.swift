@@ -160,10 +160,11 @@ extension CalendarEventDTO {
         return model
     }
 
-    init(from event: CalendarEvent) {
+    init(from event: CalendarEvent, host: UserDTO? = nil) {
         self.init(
             id: event.id,
             hostID: event.$host.id,
+            host: host,
             circleID: event.$circle.id,
             title: event.title,
             description: event.description,

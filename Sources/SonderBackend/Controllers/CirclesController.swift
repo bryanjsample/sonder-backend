@@ -41,6 +41,10 @@ struct CirclesController: RouteCollection {
         circlesProtected.group(":circleID", "users") { circleUsers in
             circleUsers.get(use: retrieveUsers)
         }
+        
+        circlesProtected.group(":circleID", "users", ":userID") { circleUser in
+            circleUser.get(use: retrieveUser)
+        }
 
         circlesProtected.group(":circleID", "feed") { circleFeed in
             circleFeed.get(use: retrieveFeed)
@@ -194,6 +198,19 @@ struct CirclesController: RouteCollection {
         let userDTOs = try await circle.$users.query(on: req.db).all()
             .map { UserDTO(from: $0) }
         return try helper.sendResponseObject(dto: userDTOs)
+    }
+    
+    func retrieveUser(req: Request) async throws -> Response {
+        let clientUser = try req.auth.require(User.self)
+        let circle = try await helper.getCircle(req: req)
+        
+        if !clientUser.isCircleMember(circle) {
+            throw Abort(.unauthorized, reason: "User is not a member of requested circle.")
+        }
+        
+        let requestedUser = try await helper.getUser(req: req)
+        let dto = UserDTO(from: requestedUser)
+        return try helper.sendResponseObject(dto: dto)
     }
 
     func retrieveFeed(req: Request) async throws -> Response {

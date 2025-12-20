@@ -39,12 +39,19 @@ struct PostsController: RouteCollection {
             throw Abort(.unauthorized, reason: "User is not a member of requested circle.")
         }
 
-        let postDTOs = try await circle.$posts.query(on: req.db)
-            .all()
-            .map { PostDTO(from: $0) }
+        let posts = try await circle.$posts.query(on: req.db).all()
+        
+        var postDTOs: [PostDTO] = []
+        for post in posts {
+            let author = try await post.$author.get(on: req.db)
+            let authorDTO = UserDTO(from: author)
+            postDTOs.append(PostDTO(from: post, author: authorDTO))
+        }
+        
         let sorted = postDTOs.sorted {
             $0.createdAt! > $1.createdAt!
         }
+        
         return try helper.sendResponseObject(dto: sorted)
     }
 
@@ -61,6 +68,7 @@ struct PostsController: RouteCollection {
 
         postDTO.circleID = circle.id!
         postDTO.authorID = user.id!
+        postDTO.author = UserDTO(from: user)
 
         let sanitizedDTO = try postDTO.validateAndSanitize()
         let post = sanitizedDTO.toModel()
@@ -143,11 +151,12 @@ struct PostsController: RouteCollection {
 }
 
 extension PostDTO {
-    init(from post: Post) {
+    init(from post: Post, author: UserDTO? = nil) {
         self.init(
             id: post.id ?? nil,
             circleID: post.$circle.id,
             authorID: post.$author.id,
+            author: author,
             content: post.content,
             createdAt: post.createdAt ?? nil
         )

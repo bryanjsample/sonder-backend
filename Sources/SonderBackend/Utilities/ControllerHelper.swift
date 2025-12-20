@@ -79,6 +79,17 @@ struct ControllerHelper {
         }
         return comment
     }
+    
+    func getUser(req: Request) async throws -> User {
+        let userIDparam = try req.parameters.require("userID")
+        guard let userUUID = UUID(uuidString: userIDparam) else {
+            throw Abort(.badRequest, reason: "invalid user ID")
+        }
+        guard let user = try await User.find(userUUID, on: req.db) else {
+            throw Abort(.notFound, reason: "User does not exist")
+        }
+        return user
+    }
 
     func sendResponseObject(
         dto: any Encodable,
