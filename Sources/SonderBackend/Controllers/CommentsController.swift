@@ -147,11 +147,12 @@ struct CommentsController: RouteCollection {
 }
 
 extension CommentDTO {
-    init(from comment: Comment) {
+    init(from comment: Comment, author: UserDTO? = nil) {
         self.init(
             id: comment.id ?? nil,
             postID: comment.$post.id,
             authorID: comment.$author.id,
+            author: author,
             content: comment.content,
             createdAt: comment.createdAt ?? nil
         )
