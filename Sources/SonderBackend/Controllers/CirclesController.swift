@@ -73,7 +73,7 @@ struct CirclesController: RouteCollection {
             throw Abort(.conflict, reason: "Circle already exists")
         } else {
             try await circle.save(on: req.db)
-            let dto = CircleDTO(from: circle)
+            var dto = CircleDTO(from: circle)
             guard let circleID = circle.id else {
                 throw Abort(.notFound, reason: "Circle ID is not found")
             }
@@ -81,6 +81,12 @@ struct CirclesController: RouteCollection {
             req.logger.info("circleID = \(circleID)")
             try await user.update(on: req.db)
             req.logger.info("User updated to contain circleID")
+            let members = try await circle.$users.query(on: req.db).all()
+                .map {
+                    UserDTO(from: $0)
+                }
+            dto.members = members
+            req.logger.info("members loaded into dto")
             return try helper.sendResponseObject(dto: dto, responseStatus: .created)
         }
     }
@@ -117,7 +123,16 @@ struct CirclesController: RouteCollection {
         user.$circle.id = circleID
         try await user.update(on: req.db)
         
-        let resDTO = CircleDTO(from: circle)
+        let members = try await circle.$users.query(on: req.db).all()
+            .map {
+                UserDTO(from: $0)
+            }
+        
+        var resDTO = CircleDTO(from: circle)
+        resDTO.members = members
+        req.logger.info("members loaded into dto")
+        
+
         return try helper.sendResponseObject(dto: resDTO)
     }
     
